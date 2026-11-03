@@ -42,13 +42,29 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         hmaApp = this
+
+        // 先装崩溃日志钩子，保证任何阶段崩溃都能落盘
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            try {
+                val text = "Thread: ${t.name}\n" + e.stackTraceToString()
+                hmaApp.getExternalFilesDir(null)?.let { dir ->
+                    java.io.File(dir, "apkesu_crash.log").writeText(text)
+                }
+                try {
+                    val download = android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS
+                    )
+                    java.io.File(download, "apkesu_crash.log").writeText(text)
+                } catch (_: Throwable) {
+                }
+            } catch (_: Throwable) {
+            }
+            ServiceClient.log(Log.ERROR, t.name, e.stackTraceToString())
+            defaultHandler?.uncaughtException(t, e)
+        }
+
         loadPreferences()
         AppChangeReceiver.register(this)
-
-        val handler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            ServiceClient.log(Log.ERROR, t.name, e.stackTraceToString())
-            handler?.uncaughtException(t, e)
-        }
     }
 }
