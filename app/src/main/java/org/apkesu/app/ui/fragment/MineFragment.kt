@@ -8,8 +8,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import dev.androidbroadcast.vbpd.viewBinding
+import icu.nullptr.hidemyapplist.ui.fragment.SettingsFragment
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.attrDrawable
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.homeItemBackgroundColor
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.themeColor
@@ -32,20 +34,21 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
 
         styleList(binding.mineGroup)
 
-        with(binding.navSettings) {
-            text1.text = getString(R.string.title_settings)
-            icon.setImageResource(R.drawable.outline_settings_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_settings)
-            }
-        }
-
         with(binding.navAbout) {
             text1.text = getString(R.string.title_about)
             icon.setImageResource(R.drawable.outline_info_24)
             root.setOnClickListener {
                 navigate(R.id.nav_about)
             }
+        }
+
+        // Embed the full settings panel directly on the "Mine" page
+        if (childFragmentManager.findFragmentById(R.id.settings_embed_container) == null) {
+            val settingsFragment = SettingsFragment()
+            settingsFragment.arguments = bundleOf("embedded" to true)
+            childFragmentManager.beginTransaction()
+                .replace(R.id.settings_embed_container, settingsFragment)
+                .commit()
         }
     }
 
@@ -74,14 +77,20 @@ class MineFragment : Fragment(R.layout.fragment_mine) {
                 val backgroundDrawable = GradientDrawable()
                 backgroundDrawable.setColor(homeItemBackgroundColor())
 
-                when (i) {
-                    0 -> {
+                when {
+                    childCount == 1 -> {
+                        backgroundDrawable.cornerRadii = floatArrayOf(
+                            softCorner, softCorner, softCorner, softCorner,
+                            softCorner, softCorner, softCorner, softCorner
+                        )
+                    }
+                    i == 0 -> {
                         backgroundDrawable.cornerRadii = floatArrayOf(
                             softCorner, softCorner, softCorner, softCorner,
                             squareCorner, squareCorner, squareCorner, squareCorner
                         )
                     }
-                    childCount - 1 -> {
+                    i == childCount - 1 -> {
                         backgroundDrawable.cornerRadii = floatArrayOf(
                             squareCorner, squareCorner, squareCorner, squareCorner,
                             softCorner, softCorner, softCorner, softCorner

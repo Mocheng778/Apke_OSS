@@ -7,6 +7,7 @@ import android.text.TextUtils
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -57,18 +58,24 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmen
     private val binding by viewBinding(FragmentSettingsBinding::bind)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        with(binding.toolbar) {
-            setupToolbar(
-                toolbar = this,
-                title = getString(R.string.title_settings),
-                navigationIcon = R.drawable.baseline_arrow_back_24,
-                navigationOnClick = {
-                    if (!parentFragmentManager.popBackStackImmediate()) {
-                        navController.navigateUp()
+        val embedded = arguments?.getBoolean("embedded", false) == true
+
+        if (embedded) {
+            binding.appBar.isVisible = false
+        } else {
+            with(binding.toolbar) {
+                setupToolbar(
+                    toolbar = this,
+                    title = getString(R.string.title_settings),
+                    navigationIcon = R.drawable.baseline_arrow_back_24,
+                    navigationOnClick = {
+                        if (!parentFragmentManager.popBackStackImmediate()) {
+                            navController.navigateUp()
+                        }
                     }
-                }
-            )
-            // isTitleCentered = true
+                )
+                // isTitleCentered = true
+            }
         }
 
         runBlocking {

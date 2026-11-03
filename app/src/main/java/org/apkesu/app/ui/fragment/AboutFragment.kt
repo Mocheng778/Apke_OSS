@@ -78,7 +78,7 @@ class AboutFragment : Fragment(R.layout.fragment_about) {
             }
 
             setOnClickUrl(linkGithub, "https://github.com/Mocheng778/Apke_OSS")
-            setOnClickUrl(linkTelegram, "https://t.me/aerathfuns")
+            setOnClickUrl(linkTelegram, "https://t.me/mochensk")
 
             appInfoTop.backgroundTintList = tint
             (appName.parent as View).backgroundTintList = tint

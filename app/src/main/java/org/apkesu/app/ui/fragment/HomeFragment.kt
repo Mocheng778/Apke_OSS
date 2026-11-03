@@ -208,6 +208,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             applyOneKeyConfig()
         }
 
+        with(binding.backupConfig) {
+            setOnClickListener {
+                navigate(
+                    R.id.nav_backup_restore,
+                    BackupRestoreFragmentArgs(true).toBundle()
+                )
+            }
+        }
+
+        with(binding.restoreConfig) {
+            setOnClickListener {
+                navigate(
+                    R.id.nav_backup_restore,
+                    BackupRestoreFragmentArgs(false).toBundle()
+                )
+            }
+        }
+
         lifecycleScope.launch {
             loadDialogs()
         }

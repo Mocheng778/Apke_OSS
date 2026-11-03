@@ -74,8 +74,8 @@ val gitCommitCountAfterOss = gitCommitCount - 432
 val minSdkVer by extra(29)
 val targetSdkVer by extra(37)
 
-val appVerCode by extra(10000)
-val appVerName by extra("v1.0.0")
+val appVerCode by extra(10200)
+val appVerName by extra("v1.2.0")
 
 /*
  * configVerCode, serviceVerCode and minBackupVerCode is used by other build.gradle.kts files

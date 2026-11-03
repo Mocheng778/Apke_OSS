@@ -63,24 +63,6 @@
 
             </LinearLayout>
 
-            <LinearLayout
-                android:divider="@drawable/divider"
-                android:showDividers="middle"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <include
-                    android:id="@+id/backup_config"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/restore_config"
-                    layout="@layout/view_home_item" />
-
-            </LinearLayout>
-
         </LinearLayout>
 
     </ScrollView>

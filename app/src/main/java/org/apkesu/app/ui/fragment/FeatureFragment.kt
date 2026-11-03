@@ -21,7 +21,6 @@ import icu.nullptr.hidemyapplist.ui.util.setEdge2EdgeFlags
 import icu.nullptr.hidemyapplist.ui.util.setupToolbar
 import org.apkesu.app.R
 import org.apkesu.app.databinding.FragmentFeaturesBinding
-import org.apkesu.app.ui.fragment.BackupRestoreFragmentArgs
 
 class FeatureFragment : Fragment(R.layout.fragment_features) {
     private val binding by viewBinding(FragmentFeaturesBinding::bind)
@@ -72,28 +71,6 @@ class FeatureFragment : Fragment(R.layout.fragment_features) {
             icon.setImageResource(R.drawable.outline_assignment_24)
             root.setOnClickListener {
                 navigate(R.id.nav_logs)
-            }
-        }
-
-        with(binding.backupConfig) {
-            text1.text = getString(R.string.home_backup_config)
-            icon.setImageResource(R.drawable.outline_backup_24)
-            root.setOnClickListener {
-                navigate(
-                    R.id.nav_backup_restore,
-                    BackupRestoreFragmentArgs(true).toBundle()
-                )
-            }
-        }
-
-        with(binding.restoreConfig) {
-            text1.text = getString(R.string.home_restore_config)
-            icon.setImageResource(R.drawable.outline_settings_backup_restore_24)
-            root.setOnClickListener {
-                navigate(
-                    R.id.nav_backup_restore,
-                    BackupRestoreFragmentArgs(false).toBundle()
-                )
             }
         }
     }
