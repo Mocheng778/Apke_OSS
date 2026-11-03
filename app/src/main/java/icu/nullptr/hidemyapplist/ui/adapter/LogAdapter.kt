@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import icu.nullptr.hidemyapplist.service.PrefManager
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.themeColor
-import org.frknkrc44.hma_oss.R
-import org.frknkrc44.hma_oss.databinding.LogItemViewBinding
+import org.apkesu.app.R
+import org.apkesu.app.databinding.LogItemViewBinding
 import java.util.regex.Pattern
 
 class LogAdapter(context: Context) : RecyclerView.Adapter<LogAdapter.ViewHolder>() {

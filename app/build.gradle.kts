@@ -34,7 +34,7 @@ materialThemeBuilder {
             "DeepOrange" to "FF5722",
             "Brown" to "795548",
             "BlueGrey" to "607D8F",
-            "Sakura" to "FF9CA8"
+            "Sakura" to "EC87AE"
         )) {
             create("Material$name") {
                 lightThemeFormat = "ThemeOverlay.Light.%s"
@@ -76,14 +76,21 @@ afterEvaluate {
             setRequestProperty("authorization", "Bearer $crowdinApiKey")
         }
     } else {
-        val url = URL("https://github.com/frknkrc44/HMA-OSS/releases/latest/download/translators.json")
+        val url = URL("https://github.com/frknkrc44/ApkeSU/releases/latest/download/translators.json")
         url.openConnection() as HttpURLConnection
     }
 
-    val inputStream = DataInputStream(urlConnection.getInputStream())
-    val str = String(inputStream.readAllBytes())
-    inputStream.close()
-    urlConnection.disconnect()
+    val localTranslators = rootProject.file("translators.json")
+    val str = if (localTranslators.exists() && crowdinApiKey.isBlank()) {
+        logger.lifecycle("Using local translators.json")
+        localTranslators.readText()
+    } else {
+        val inputStream = DataInputStream(urlConnection.getInputStream())
+        val s = String(inputStream.readAllBytes())
+        inputStream.close()
+        urlConnection.disconnect()
+        s
+    }
 
     val json = JsonParser.parseString(str).asJsonObject
 

@@ -6,17 +6,17 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.HomeFragment"
+        android:name="org.apkesu.app.ui.fragment.HomeFragment"
         android:label="@string/title_home" />
 
     <fragment
         android:id="@+id/nav_fix_issue"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.FixIssueFragment"
+        android:name="org.apkesu.app.ui.fragment.FixIssueFragment"
         android:label="@string/home_migrate_data_fix_button" />
 
     <fragment
         android:id="@+id/nav_logs"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.TabbedLogsFragment"
+        android:name="org.apkesu.app.ui.fragment.TabbedLogsFragment"
         android:label="@string/title_logs" />
 
     <fragment
@@ -26,7 +26,7 @@
 
     <fragment
         android:id="@+id/nav_about"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.AboutFragment"
+        android:name="org.apkesu.app.ui.fragment.AboutFragment"
         android:label="@string/title_about" />
 
     <fragment
@@ -36,7 +36,7 @@
 
     <fragment
         android:id="@+id/nav_presets"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.PresetManageFragment"
+        android:name="org.apkesu.app.ui.fragment.PresetManageFragment"
         android:label="@string/title_preset_manage" />
 
     <fragment
@@ -57,7 +57,7 @@
 
     <fragment
         android:id="@+id/nav_bulk_config_wizard"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.BulkConfigWizardFragment"
+        android:name="org.apkesu.app.ui.fragment.BulkConfigWizardFragment"
         android:label="@string/title_template_settings">
 
         <argument
@@ -73,7 +73,7 @@
 
     <fragment
         android:id="@+id/nav_setting_template_conf"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.SettingsTemplateConfFragment"
+        android:name="org.apkesu.app.ui.fragment.SettingsTemplateConfFragment"
         android:label="@string/title_settings_template_conf">
 
         <argument
@@ -90,7 +90,7 @@
 
     <fragment
         android:id="@+id/nav_preset_inner_manage"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.AppPresetFragment">
+        android:name="org.apkesu.app.ui.fragment.AppPresetFragment">
 
         <argument
             android:name="name"
@@ -104,7 +104,7 @@
 
     <fragment
         android:id="@+id/nav_settings_templates_edit_setting"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.EditSettingFragment">
+        android:name="org.apkesu.app.ui.fragment.EditSettingFragment">
 
         <argument
             android:name="database"
@@ -124,7 +124,7 @@
 
     <fragment
         android:id="@+id/nav_settings_preset_inner_manage"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.SettingsPresetFragment">
+        android:name="org.apkesu.app.ui.fragment.SettingsPresetFragment">
 
         <argument
             android:name="name"
@@ -138,7 +138,7 @@
 
     <fragment
         android:id="@+id/nav_settings_template_inner_manage"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.SettingsTemplateInnerFragment">
+        android:name="org.apkesu.app.ui.fragment.SettingsTemplateInnerFragment">
 
         <argument
             android:name="items"
@@ -148,7 +148,7 @@
 
     <fragment
         android:id="@+id/nav_app_settings"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.AppSettingsV2Fragment"
+        android:name="org.apkesu.app.ui.fragment.AppSettingsV2Fragment"
         android:label="@string/title_app_settings">
 
         <argument
@@ -212,7 +212,7 @@
 
     <fragment
         android:id="@+id/nav_backup_restore"
-        android:name="org.frknkrc44.hma_oss.ui.fragment.BackupRestoreFragment">
+        android:name="org.apkesu.app.ui.fragment.BackupRestoreFragment">
 
         <argument
             android:name="isBackupMode"

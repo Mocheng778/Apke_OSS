@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.SystemProperties
 import icu.nullptr.hidemyapplist.common.Utils.isPackageAvailable
-import org.frknkrc44.hma_oss.common.BuildConfig
+import org.apkesu.app.common.BuildConfig
 
 object OSUtils {
     private val PACKAGES_TO_CHECK = listOf(
@@ -17,7 +17,7 @@ object OSUtils {
     fun collectOSInfo(context: Context, serviceVersion: String?) = buildString {
         val pkgMgr = context.packageManager
 
-        append("HMA-OSS Log")
+        append("ApkeSU Log")
         append("\nApp version: ")
         append("${BuildConfig.APP_VERSION_NAME} (${BuildConfig.APP_VERSION_CODE})")
         append("\nService version: ")

@@ -1,7 +1,7 @@
 package icu.nullptr.hidemyapplist.data
 
-import org.frknkrc44.hma_oss.BuildConfig
-import org.frknkrc44.hma_oss.R
+import org.apkesu.app.BuildConfig
+import org.apkesu.app.R
 
 object AppConstants {
     const val COMPONENT_NAME_DEFAULT         = "${BuildConfig.APPLICATION_ID}.MainActivityLauncher"
@@ -18,7 +18,7 @@ object AppConstants {
         R.mipmap.ic_launcher_alt_4 to COMPONENT_NAME_ALT_4,
     )
 
-    const val UPDATE_CHECK_URL = "https://api.github.com/repos/frknkrc44/HMA-OSS/releases/latest"
+    const val UPDATE_CHECK_URL = "https://api.github.com/repos/Mocheng778/Apke_OSS/releases/latest"
 
     const val APP_CONFIG_MODE_SINGLE = 0
     const val APP_CONFIG_MODE_BULK_CONFIG = 1

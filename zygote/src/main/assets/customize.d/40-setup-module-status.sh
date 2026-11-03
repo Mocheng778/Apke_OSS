@@ -4,11 +4,11 @@
 
 mkdir -p /data/adb/boot-completed.d
 
-cp "$MODPATH"/hmaoss.sh /data/adb/boot-completed.d/hmaoss.sh
+cp "$MODPATH"/apkesu.sh /data/adb/boot-completed.d/apkesu.sh
 
-chmod +x /data/adb/boot-completed.d/hmaoss.sh
+chmod +x /data/adb/boot-completed.d/apkesu.sh
 
 # remove old update desc files
-rm -f "/data/adb/post-fs-data.d/hmaoss.sh" "/data/adb/post-mount.d/hmaoss.sh"
+rm -f "/data/adb/post-fs-data.d/apkesu.sh" "/data/adb/post-mount.d/apkesu.sh"
 
 cp "$MODPATH/module.prop" "$MODPATH/module.prop.bak"

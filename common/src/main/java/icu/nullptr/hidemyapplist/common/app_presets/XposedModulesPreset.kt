@@ -2,7 +2,7 @@ package icu.nullptr.hidemyapplist.common.app_presets
 
 import android.content.pm.ApplicationInfo
 import icu.nullptr.hidemyapplist.common.Utils.checkSplitPackages
-import org.frknkrc44.hma_oss.common.BuildConfig
+import org.apkesu.app.common.BuildConfig
 
 class XposedModulesPreset : BasePreset(NAME) {
     companion object {

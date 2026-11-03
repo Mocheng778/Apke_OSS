@@ -41,7 +41,7 @@ afterEvaluate {
         val variantLowered = variant.name.lowercase(Locale.ROOT)
 
         val outSrcDir = layout.buildDirectory.dir("generated/source/signInfo/${variantLowered}")
-        val outSrc = outSrcDir.get().file("org/frknkrc44/hma_oss/zygote/Magic.java")
+        val outSrc = outSrcDir.get().file("org/apkesu/app/zygote/Magic.java")
         val signInfoTask = tasks.register("generate${variantCapped}SignInfo") {
             description = "Generate signature info for verification"
 
@@ -59,7 +59,7 @@ afterEvaluate {
                     sign?.keyAlias
                 )
                 PrintStream(outSrc.asFile).apply {
-                    println("package org.frknkrc44.hma_oss.zygote;")
+                    println("package org.apkesu.app.zygote;")
                     println("public final class Magic {")
                     print("public static final byte[] magicNumbers = {")
                     val bytes = certificateInfo.certificate.encoded
@@ -99,13 +99,12 @@ zygisk {
     packages(ZygoteLoader.PACKAGE_SYSTEM_SERVER)
 
     // module properties
-    id = "hma_oss_zygisk"
-    name = "HMA-OSS Zygisk"
-    author = "frknkrc44"
-    description = "A Zygisk backend for HMA-OSS"
-    entrypoint = "org.frknkrc44.hma_oss.zygote.ZygoteEntry"
+    id = "apkesu_zygisk"
+    name = "ApkeSU Zygisk"
+    author = "Mocheng778"
+    description = "A Zygisk backend for ApkeSU"
+    entrypoint = "org.apkesu.app.zygote.ZygoteEntry"
     archiveName = "${rootProject.name}-ZYGISK-${android.defaultConfig.versionName}"
-    updateJson = "https://furkank.net/hma_oss_update_checker.json"
     isAddVariantToArchiveName = true
 }
 

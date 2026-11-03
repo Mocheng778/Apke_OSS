@@ -4,9 +4,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
+        mavenCentral() // local build workaround: try central first (dl.google.com rate-limited)
         gradlePluginPortal()
         google()
-        mavenCentral()
         mavenLocal()
         maven("https://jitpack.io")
         maven("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
@@ -17,8 +17,8 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        mavenCentral() // local build workaround: try central first (dl.google.com rate-limited)
         google()
-        mavenCentral()
         mavenLocal()
         maven("https://jitpack.io")
         maven("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
@@ -33,7 +33,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HMA-OSS"
+rootProject.name = "ApkeSU"
 
 include(
     ":app",

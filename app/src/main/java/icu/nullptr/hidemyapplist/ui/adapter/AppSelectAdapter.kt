@@ -9,7 +9,7 @@ import icu.nullptr.hidemyapplist.ui.util.get
 import icu.nullptr.hidemyapplist.ui.view.AppItemView
 import icu.nullptr.hidemyapplist.util.PackageHelper
 import kotlinx.coroutines.runBlocking
-import org.frknkrc44.hma_oss.BuildConfig
+import org.apkesu.app.BuildConfig
 
 abstract class AppSelectAdapter(
     private val hideMyself: Boolean,

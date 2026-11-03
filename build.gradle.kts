@@ -74,8 +74,8 @@ val gitCommitCountAfterOss = gitCommitCount - 432
 val minSdkVer by extra(29)
 val targetSdkVer by extra(37)
 
-val appVerCode by extra(gitCommitCount + 0x6f7373) // commit count + 0xOSS
-val appVerName by extra(gitVersionName)
+val appVerCode by extra(10000)
+val appVerName by extra("v1.0.0")
 
 /*
  * configVerCode, serviceVerCode and minBackupVerCode is used by other build.gradle.kts files
@@ -93,7 +93,7 @@ val serviceVerCode by extra(105)
 val minBackupVerCode by extra(65)
 
 @Suppress("unused")
-val appPackageName by extra("org.frknkrc44.hma_oss")
+val appPackageName by extra("org.apkesu.app")
 
 @Suppress("unused")
 val localBuild by extra(localProperties.getProperty("localBuild", "false") == "true")

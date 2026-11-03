@@ -9,7 +9,7 @@ import icu.nullptr.hidemyapplist.common.PropertyUtils
 import icu.nullptr.hidemyapplist.common.settings_presets.ReplacementItem
 import icu.nullptr.hidemyapplist.service.ServiceClient.log
 import icu.nullptr.hidemyapplist.util.PackageHelper
-import org.frknkrc44.hma_oss.common.BuildConfig
+import org.apkesu.app.common.BuildConfig
 
 object ConfigManager {
     /**

@@ -6,7 +6,7 @@ import icu.nullptr.hidemyapplist.common.Constants
 import icu.nullptr.hidemyapplist.service.ConfigManager
 import icu.nullptr.hidemyapplist.service.PrefManager
 import icu.nullptr.hidemyapplist.ui.view.AppItemView
-import org.frknkrc44.hma_oss.R
+import org.apkesu.app.R
 
 class AppManageAdapter(
     private val onItemClickListener: (String) -> Unit

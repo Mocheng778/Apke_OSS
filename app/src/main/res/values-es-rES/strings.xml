@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">Módulo No Activado</string>
     <string name="home_xposed_service_on">Servicio del sistema ejecutándose [%d]</string>
     <string name="home_xposed_service_off">El servicio del sistema no se está ejecutando</string>
-    <string name="home_xposed_filter_count">HMA-OSS ha filtrado un total de %d solicitudes</string>
+    <string name="home_xposed_filter_count">ApkeSU ha filtrado un total de %d solicitudes</string>
     <string name="home_manage">Administrar</string>
     <string name="home_detection_test">Prueba de detección</string>
     <string name="home_download_test_app_title">Descargar aplicación de prueba</string>
@@ -260,6 +260,6 @@
     <string name="dark_theme_off">Siempre apagado</string>
     <string name="dark_theme_on">Siempre encendido</string>
     <string name="sick_mode_title">El modo seguro está activado</string>
-    <string name="sick_mode_description">HMA-OSS detectó módulos posiblemente conflictivos y limitó su funcionalidad</string>
-    <string name="sick_mode_notice">Las configuraciones HMA/HMAL son compatibles con HMA-OSS y puede comenzar a usar con su configuración existente, pero necesita desinstalar HMA/HMAL y luego reiniciar al principio</string>
+    <string name="sick_mode_description">ApkeSU detectó módulos posiblemente conflictivos y limitó su funcionalidad</string>
+    <string name="sick_mode_notice">Las configuraciones HMA/HMAL son compatibles con ApkeSU y puede comenzar a usar con su configuración existente, pero necesita desinstalar HMA/HMAL y luego reiniciar al principio</string>
 </resources>

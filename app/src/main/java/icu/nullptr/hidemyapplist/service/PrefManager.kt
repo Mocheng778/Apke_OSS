@@ -63,11 +63,11 @@ object PrefManager {
         set(value) = pref.edit { putBoolean(PREF_BLACK_DARK_THEME, value) }
 
     var followSystemAccent: Boolean
-        get() = pref.getBoolean(PREF_FOLLOW_SYSTEM_ACCENT, true)
+        get() = pref.getBoolean(PREF_FOLLOW_SYSTEM_ACCENT, false)
         set(value) = pref.edit { putBoolean(PREF_FOLLOW_SYSTEM_ACCENT, value) }
 
     var themeColor: String
-        get() = pref.getString(PREF_THEME_COLOR, "MATERIAL_BLUE")!!
+        get() = pref.getString(PREF_THEME_COLOR, "SAKURA")!!
         set(value) = pref.edit { putString(PREF_THEME_COLOR, value) }
 
     var hideIcon: Boolean

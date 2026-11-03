@@ -3,7 +3,7 @@ package icu.nullptr.hidemyapplist.common
 import icu.nullptr.hidemyapplist.common.Utils.encoder
 import icu.nullptr.hidemyapplist.common.settings_presets.ReplacementItem
 import kotlinx.serialization.Serializable
-import org.frknkrc44.hma_oss.common.BuildConfig
+import org.apkesu.app.common.BuildConfig
 
 @Serializable
 data class JsonConfig(

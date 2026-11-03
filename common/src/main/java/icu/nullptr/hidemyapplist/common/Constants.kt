@@ -1,6 +1,6 @@
 package icu.nullptr.hidemyapplist.common
 
-import org.frknkrc44.hma_oss.common.BuildConfig
+import org.apkesu.app.common.BuildConfig
 
 object Constants {
     const val PROVIDER_AUTHORITY = "${BuildConfig.APP_PACKAGE_NAME}.ServiceProvider"

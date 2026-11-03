@@ -7,7 +7,7 @@ import androidx.core.view.isVisible
 import dev.androidbroadcast.vbpd.CreateMethod
 import dev.androidbroadcast.vbpd.viewBinding
 import icu.nullptr.hidemyapplist.util.PackageHelper
-import org.frknkrc44.hma_oss.databinding.AppItemViewBinding
+import org.apkesu.app.databinding.AppItemViewBinding
 
 class AppItemView @JvmOverloads constructor(
     context: Context,

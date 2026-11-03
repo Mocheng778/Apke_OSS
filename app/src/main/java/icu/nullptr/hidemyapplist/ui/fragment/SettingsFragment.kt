@@ -44,12 +44,12 @@ import icu.nullptr.hidemyapplist.util.PackageHelper.findEnabledAppComponent
 import icu.nullptr.hidemyapplist.util.SuUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.frknkrc44.hma_oss.BuildConfig
-import org.frknkrc44.hma_oss.R
-import org.frknkrc44.hma_oss.databinding.FragmentSettingsBinding
-import org.frknkrc44.hma_oss.ui.activity.MainActivity
-import org.frknkrc44.hma_oss.ui.fragment.AppSettingsV2FragmentArgs
-import org.frknkrc44.hma_oss.ui.preference.AppIconPreference
+import org.apkesu.app.BuildConfig
+import org.apkesu.app.R
+import org.apkesu.app.databinding.FragmentSettingsBinding
+import org.apkesu.app.ui.activity.MainActivity
+import org.apkesu.app.ui.fragment.AppSettingsV2FragmentArgs
+import org.apkesu.app.ui.preference.AppIconPreference
 import java.util.Locale
 
 class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {

@@ -20,8 +20,8 @@ import icu.nullptr.hidemyapplist.ui.util.contentResolver
 import icu.nullptr.hidemyapplist.ui.util.setupToolbar
 import icu.nullptr.hidemyapplist.ui.util.showToast
 import kotlinx.coroutines.launch
-import org.frknkrc44.hma_oss.R
-import org.frknkrc44.hma_oss.databinding.FragmentLogsBinding
+import org.apkesu.app.R
+import org.apkesu.app.databinding.FragmentLogsBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -109,7 +109,7 @@ class LogsFragment(
             R.id.menu_refresh -> updateLogs()
             R.id.menu_save -> {
                 val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.getDefault()).format(Date())
-                saveSAFLauncher.launch("HMA-OSS_logs_$date.log")
+                saveSAFLauncher.launch("ApkeSU_logs_$date.log")
             }
             R.id.menu_delete -> {
                 ServiceClient.clearLogs()

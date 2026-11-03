@@ -1,8 +1,8 @@
 #!/system/bin/sh
 
 MODDIR="${0%/*}"
-PKG=org.frknkrc44.hma_oss
-ACTIVITY=org.frknkrc44.hma_oss.ui.activity.MainActivity
+PKG=org.apkesu.app
+ACTIVITY=org.apkesu.app.ui.activity.MainActivity
 APK_FILE="$MODDIR/manager.apk"
 
 # reload module status first (regardless of launch outcome)
@@ -16,7 +16,7 @@ install_pkg() {
 }
 
 launch_pkg() {
-  echo "- Launching HMA-OSS manager on user "$1
+  echo "- Launching ApkeSU manager on user "$1
   am start -n $PKG/$ACTIVITY --user $1
 }
 

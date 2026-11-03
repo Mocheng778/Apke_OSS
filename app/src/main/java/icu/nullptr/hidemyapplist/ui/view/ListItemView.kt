@@ -10,8 +10,8 @@ import dev.androidbroadcast.vbpd.CreateMethod
 import dev.androidbroadcast.vbpd.viewBinding
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.themeColor
 import icu.nullptr.hidemyapplist.ui.util.dpToPx
-import org.frknkrc44.hma_oss.R
-import org.frknkrc44.hma_oss.databinding.ListItemViewBinding
+import org.apkesu.app.R
+import org.apkesu.app.databinding.ListItemViewBinding
 
 class ListItemView @JvmOverloads constructor(
     context: Context,

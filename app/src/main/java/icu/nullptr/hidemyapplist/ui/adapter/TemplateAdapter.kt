@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import icu.nullptr.hidemyapplist.service.ConfigManager
 import icu.nullptr.hidemyapplist.ui.view.ListItemView
-import org.frknkrc44.hma_oss.R
+import org.apkesu.app.R
 import java.text.Collator
 import java.util.Locale
 

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "org.frknkrc44.stub"
+    namespace = "org.apkesu.stub"
 }
 
 dependencies {

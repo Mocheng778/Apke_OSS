@@ -5,8 +5,8 @@ import android.content.pm.ActivityInfo
 import android.content.res.Resources
 import android.util.TypedValue
 import kotlinx.coroutines.flow.MutableSharedFlow
-import org.frknkrc44.hma_oss.BuildConfig
-import org.frknkrc44.hma_oss.R
+import org.apkesu.app.BuildConfig
+import org.apkesu.app.R
 
 fun Boolean.enabledString(resources: Resources, lower: Boolean = false): String {
     val returnedStr = if (this) resources.getString(R.string.enabled)
