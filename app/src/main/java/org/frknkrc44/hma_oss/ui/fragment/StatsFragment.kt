@@ -84,7 +84,7 @@ class StatsFragment(
             }
             R.id.menu_info -> {
                 startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    data = "https://github.com/Mocheng778/Apke_OSS/wiki/About-HMA%E2%80%90OSS#filter-logs-categories".toUri()
+                    data = "https://github.com/frknkrc44/HMA-OSS/wiki/About-HMA%E2%80%90OSS#filter-logs-categories".toUri()
                 })
             }
             // TODO: Add other options when required

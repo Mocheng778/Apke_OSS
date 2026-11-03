@@ -16,7 +16,7 @@ install_pkg() {
 }
 
 launch_pkg() {
-  echo "- Launching Apke_oss manager on user "$1
+  echo "- Launching HMA-OSS manager on user "$1
   am start -n $PKG/$ACTIVITY --user $1
 }
 

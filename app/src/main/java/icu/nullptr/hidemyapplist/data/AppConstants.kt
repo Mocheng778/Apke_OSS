@@ -18,7 +18,7 @@ object AppConstants {
         R.mipmap.ic_launcher_alt_4 to COMPONENT_NAME_ALT_4,
     )
 
-    const val UPDATE_CHECK_URL = "https://api.github.com/repos/frknkrc44/Apke_oss/releases/latest"
+    const val UPDATE_CHECK_URL = "https://api.github.com/repos/frknkrc44/HMA-OSS/releases/latest"
 
     const val APP_CONFIG_MODE_SINGLE = 0
     const val APP_CONFIG_MODE_BULK_CONFIG = 1

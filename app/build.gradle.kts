@@ -76,33 +76,16 @@ afterEvaluate {
             setRequestProperty("authorization", "Bearer $crowdinApiKey")
         }
     } else {
-        val url = URL("https://github.com/Mocheng778/Apke_OSS/releases/latest/download/translators.json")
-        try {
-            url.openConnection() as HttpURLConnection
-        } catch (t: Throwable) {
-            logger.lifecycle("WARN: translators.json fetch failed (offline build?), using defaults")
-            null
-        }
+        val url = URL("https://github.com/frknkrc44/HMA-OSS/releases/latest/download/translators.json")
+        url.openConnection() as HttpURLConnection
     }
 
-    if (urlConnection == null) {
-        val translatorJson = JSONObject(translatorsMap).toJSONString()
-        File(srcDir, "translators.json").writeText(translatorJson)
-        return@afterEvaluate
-    }
     val inputStream = DataInputStream(urlConnection.getInputStream())
     val str = String(inputStream.readAllBytes())
     inputStream.close()
     urlConnection.disconnect()
 
-    val json = try {
-        JsonParser.parseString(str).asJsonObject
-    } catch (t: Throwable) {
-        logger.lifecycle("WARN: translators.json parse failed, using defaults")
-        val translatorJson = JSONObject(translatorsMap).toJSONString()
-        File(srcDir, "translators.json").writeText(translatorJson)
-        return@afterEvaluate
-    }
+    val json = JsonParser.parseString(str).asJsonObject
 
     if (crowdinApiKey.isNotBlank()) {
         val translators = json.getAsJsonArray("data")

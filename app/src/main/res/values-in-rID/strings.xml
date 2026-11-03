@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">Modul Tidak Aktif</string>
     <string name="home_xposed_service_on">Layanan sistem berjalan [%d]</string>
     <string name="home_xposed_service_off">Layanan sistem tidak berjalan</string>
-    <string name="home_xposed_filter_count">Apke_oss telah memfilter total %d permintaan</string>
+    <string name="home_xposed_filter_count">HMA-OSS telah memfilter total %d permintaan</string>
     <string name="home_manage">Kelola</string>
     <string name="home_detection_test">Tes deteksi</string>
     <string name="home_download_test_app_title">Unduh aplikasi uji</string>
@@ -264,6 +264,6 @@
     <string name="dark_theme_off">Selalu nonaktif</string>
     <string name="dark_theme_on">Selalu aktif</string>
     <string name="sick_mode_title">Mode sakit aktif</string>
-    <string name="sick_mode_description">Apke_oss mendeteksi modul yang kemungkinan tidak kompatibel dan membatasi fungsinya</string>
-    <string name="sick_mode_notice">Konfig HMA/HMAL kompatibel dengan Apke_oss dan Anda dapat mulai menggunakannya dengan konfig yang sudah ada, tetapi Anda perlu mencopot pemasangan HMA/HMAL lalu melakukan mulai ulang terlebih dahulu</string>
+    <string name="sick_mode_description">HMA-OSS mendeteksi modul yang kemungkinan tidak kompatibel dan membatasi fungsinya</string>
+    <string name="sick_mode_notice">Konfig HMA/HMAL kompatibel dengan HMA-OSS dan Anda dapat mulai menggunakannya dengan konfig yang sudah ada, tetapi Anda perlu mencopot pemasangan HMA/HMAL lalu melakukan mulai ulang terlebih dahulu</string>
 </resources>

@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">Μη Ενεργοποιημένη Ενότητα</string>
     <string name="home_xposed_service_on">Η υπηρεσία συστήματος εκτελείται [%d]</string>
     <string name="home_xposed_service_off">Η υπηρεσία συστήματος δεν εκτελείται</string>
-    <string name="home_xposed_filter_count">Το Apke_oss έχει φιλτράρει συνολικά %d αιτήματα</string>
+    <string name="home_xposed_filter_count">Το HMA-OSS έχει φιλτράρει συνολικά %d αιτήματα</string>
     <string name="home_manage">Διαχείριση</string>
     <string name="home_detection_test">Δοκιμή εντοπισμού</string>
     <string name="home_download_test_app_title">Λήψη δοκιμαστικής εφαρμογής</string>
@@ -259,6 +259,6 @@
     <string name="dark_theme_off">Πάντα απενεργοποιημένο</string>
     <string name="dark_theme_on">Πάντα ενεργοποιημένο</string>
     <string name="sick_mode_title">Η λειτουργία Sick είναι ενεργοποιημένη</string>
-    <string name="sick_mode_description">Το Apke_oss εντόπισε πιθανές διενέξεις σε ενότητες και περιόρισε τη λειτουργικότητα του</string>
-    <string name="sick_mode_notice">Οι διαμορφώσεις HMA/HMAL είναι συμβατές με το Apke_oss και μπορείτε να ξεκινήσετε να τις χρησιμοποιείτε με την υπάρχουσα διαμόρφωσή σας, αλλά πρέπει πρώτα να απεγκαταστήσετε το HMA/HMAL και στη συνέχεια να επανεκκινήσετε το σύστημα</string>
+    <string name="sick_mode_description">Το HMA-OSS εντόπισε πιθανές διενέξεις σε ενότητες και περιόρισε τη λειτουργικότητα του</string>
+    <string name="sick_mode_notice">Οι διαμορφώσεις HMA/HMAL είναι συμβατές με το HMA-OSS και μπορείτε να ξεκινήσετε να τις χρησιμοποιείτε με την υπάρχουσα διαμόρφωσή σας, αλλά πρέπει πρώτα να απεγκαταστήσετε το HMA/HMAL και στη συνέχεια να επανεκκινήσετε το σύστημα</string>
 </resources>

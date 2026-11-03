@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">Module désactivé</string>
     <string name="home_xposed_service_on">Service système en cours d\'exécution[%d]</string>
     <string name="home_xposed_service_off">Service système arrêté</string>
-    <string name="home_xposed_filter_count">Apke_oss a filtré un total de %d requêtes</string>
+    <string name="home_xposed_filter_count">HMA-OSS a filtré un total de %d requêtes</string>
     <string name="home_manage">Gérer</string>
     <string name="home_detection_test">Test de détection</string>
     <string name="home_download_test_app_title">Télécharger l\'application de test</string>
@@ -265,6 +265,6 @@ Ces applications (comme certaines applications de masquage de localisation ou d\
     <string name="dark_theme_off">Désactivé</string>
     <string name="dark_theme_on">Activé</string>
     <string name="sick_mode_title">Mode dégradé activé</string>
-    <string name="sick_mode_description">Apke_oss a détecté des modules susceptibles de provoquer des conflits et a limité ses fonctionnalités</string>
-    <string name="sick_mode_notice">Les configurations de HMA/HMAL sont compatibles avec Apke_oss. Il est par conséquent possible de commencer à les utiliser avec la configuration existante, à condition de d\'abord désinstaller HMA/HMAL puis de redémarrer l\'appareil.</string>
+    <string name="sick_mode_description">HMA-OSS a détecté des modules susceptibles de provoquer des conflits et a limité ses fonctionnalités</string>
+    <string name="sick_mode_notice">Les configurations de HMA/HMAL sont compatibles avec HMA-OSS. Il est par conséquent possible de commencer à les utiliser avec la configuration existante, à condition de d\'abord désinstaller HMA/HMAL puis de redémarrer l\'appareil.</string>
 </resources>

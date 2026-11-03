@@ -261,6 +261,6 @@
     <string name="dark_theme_off">Întotdeauna oprit</string>
     <string name="dark_theme_on">Întotdeauna pornit</string>
     <string name="sick_mode_title">Modul Sick este activat</string>
-    <string name="sick_mode_description">Apke_oss a detectat posibile module conflictuale și și-a limitat funcționalitatea</string>
-    <string name="sick_mode_notice">Configurațiile HMA/HMAL sunt compatibile cu Apke_oss și puteți începe să le folosiți, însă va trebui sa dezinstalați HMA/HMAL și să reporniți mai întâi</string>
+    <string name="sick_mode_description">HMA-OSS a detectat posibile module conflictuale și și-a limitat funcționalitatea</string>
+    <string name="sick_mode_notice">Configurațiile HMA/HMAL sunt compatibile cu HMA-OSS și puteți începe să le folosiți, însă va trebui sa dezinstalați HMA/HMAL și să reporniți mai întâi</string>
 </resources>

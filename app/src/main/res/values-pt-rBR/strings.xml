@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">Módulo não ativado</string>
     <string name="home_xposed_service_on">Serviço do sistema funcionando [%d]</string>
     <string name="home_xposed_service_off">Serviço do sistema não está funcionando</string>
-    <string name="home_xposed_filter_count">Apke_oss filtrou no total %d pedidos</string>
+    <string name="home_xposed_filter_count">HMA-OSS filtrou no total %d pedidos</string>
     <string name="home_manage">Gerenciar</string>
     <string name="home_detection_test">Teste de detecção</string>
     <string name="home_download_test_app_title">Baixar app de teste</string>
@@ -264,6 +264,6 @@
     <string name="dark_theme_off">Sempre desligado</string>
     <string name="dark_theme_on">Sempre ligado</string>
     <string name="sick_mode_title">O modo doença está ativado</string>
-    <string name="sick_mode_description">O Apke_oss detectou módulos possivelmente conflitantes e limitou sua funcionalidade</string>
-    <string name="sick_mode_notice">As configurações do HMA/HMAL são compatíveis com o Apke_oss e você pode começar a usá-las com sua configuração existente, mas primeiro precisa desinstalar o HMA/HMAL e reiniciar o sistema</string>
+    <string name="sick_mode_description">O HMA-OSS detectou módulos possivelmente conflitantes e limitou sua funcionalidade</string>
+    <string name="sick_mode_notice">As configurações do HMA/HMAL são compatíveis com o HMA-OSS e você pode começar a usá-las com sua configuração existente, mas primeiro precisa desinstalar o HMA/HMAL e reiniciar o sistema</string>
 </resources>

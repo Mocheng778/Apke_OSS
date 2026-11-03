@@ -77,7 +77,7 @@ class AboutFragment : Fragment(R.layout.fragment_about) {
                 linkTelegram.background.alpha = 0xAA
             }
 
-            setOnClickUrl(linkGithub, "https://github.com/Mocheng778/Apke_OSS")
+            setOnClickUrl(linkGithub, "https://github.com/frknkrc44/HMA-OSS")
             setOnClickUrl(linkTelegram, "https://t.me/aerathfuns")
 
             appInfoTop.backgroundTintList = tint
@@ -123,11 +123,11 @@ class AboutFragment : Fragment(R.layout.fragment_about) {
             }
         }
 
-        // Apke_oss devs
+        // HMA-OSS devs
         with(binding.listHmaOss) {
-            addDevItem(this, R.drawable.cont_fk, "frknkrc44", "Apke_oss Developer", "https://github.com/frknkrc44")
-            addDevItem(this, R.drawable.cont_oukaromf, "OukaroMF", "Apke_oss Alt Icon Designer", "https://github.com/OukaroMF")
-            addDevItem(this, R.drawable.cont_chunqiu, "longze", "Apke_oss Contributor", null)
+            addDevItem(this, R.drawable.cont_fk, "frknkrc44", "HMA-OSS Developer", "https://github.com/frknkrc44")
+            addDevItem(this, R.drawable.cont_oukaromf, "OukaroMF", "HMA-OSS Alt Icon Designer", "https://github.com/OukaroMF")
+            addDevItem(this, R.drawable.cont_chunqiu, "longze", "HMA-OSS Contributor", null)
         }
 
         // Original HMA devs

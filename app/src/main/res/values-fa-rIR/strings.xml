@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">ماژول فعال نشده</string>
     <string name="home_xposed_service_on">سرویس سیستم درحال اجرا [%d]</string>
     <string name="home_xposed_service_off">سرویس سیستم درحال اجرا نیست</string>
-    <string name="home_xposed_filter_count">Apke_oss در مجموع %d درخواست را فیلتر کرده است</string>
+    <string name="home_xposed_filter_count">HMA-OSS در مجموع %d درخواست را فیلتر کرده است</string>
     <string name="home_manage">مدیریت</string>
     <string name="home_detection_test">تست تشخیص پذیری</string>
     <string name="home_download_test_app_title">دانلود برنامه تست</string>
@@ -258,6 +258,6 @@
     <string name="dark_theme_off">همیشه خاموش</string>
     <string name="dark_theme_on">همیشه روشن</string>
     <string name="sick_mode_title">حالت ناساز فعال شد</string>
-    <string name="sick_mode_description">Apke_oss ماژول‌های احتمالیِ تداخل‌دار را شناسایی کرده و عملکرد خود را محدود نموده است</string>
-    <string name="sick_mode_notice">تنظیمات HMA/HMAL با Apke_oss سازگار هستند و می‌توانید با همان تنظیمات موجود خود شروع به کار کنید، اما ابتدا باید HMA/HMAL را حذف کرده و سپس دستگاه را ریبوت کنید</string>
+    <string name="sick_mode_description">HMA-OSS ماژول‌های احتمالیِ تداخل‌دار را شناسایی کرده و عملکرد خود را محدود نموده است</string>
+    <string name="sick_mode_notice">تنظیمات HMA/HMAL با HMA-OSS سازگار هستند و می‌توانید با همان تنظیمات موجود خود شروع به کار کنید، اما ابتدا باید HMA/HMAL را حذف کرده و سپس دستگاه را ریبوت کنید</string>
 </resources>

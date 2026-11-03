@@ -355,7 +355,7 @@ class BackupRestoreFragment : Fragment(R.layout.fragment_backup_restore) {
     private fun onMenuOptionSelected(item: MenuItem) {
         if (isBackupMode) {
             val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.getDefault()).format(Date())
-            backupSAFLauncher.launch("Apke_oss_config_$date.json")
+            backupSAFLauncher.launch("HMA-OSS_config_$date.json")
         } else {
             onRestore()
         }

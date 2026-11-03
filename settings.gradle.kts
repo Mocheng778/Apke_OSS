@@ -33,7 +33,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Apke_oss"
+rootProject.name = "HMA-OSS"
 
 include(
     ":app",

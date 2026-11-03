@@ -17,7 +17,7 @@ object OSUtils {
     fun collectOSInfo(context: Context, serviceVersion: String?) = buildString {
         val pkgMgr = context.packageManager
 
-        append("Apke_oss Log")
+        append("HMA-OSS Log")
         append("\nApp version: ")
         append("${BuildConfig.APP_VERSION_NAME} (${BuildConfig.APP_VERSION_CODE})")
         append("\nService version: ")

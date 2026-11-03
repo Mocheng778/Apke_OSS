@@ -1,33 +1,31 @@
 <div align="center">
-  <h2>Apke_oss</h2>
+  <h2>HMA-OSS</h2>
 
-  <img src="HideMyAss-OSS.svg" alt="Apke_oss Logo" style="max-width:360px;width:60%;height:auto;">
+  <img src="HideMyAss-OSS.svg" alt="HMA-OSS Logo" style="max-width:360px;width:60%;height:auto;">
 
   <p>
-    <a href="https://github.com/Mocheng778/Apke_OSS" style="text-decoration:none">
-      <img src="https://img.shields.io/github/stars/Mocheng778/Apke_OSS?label=Stars&logo=github">
+    <a href="https://github.com/frknkrc44/HMA-OSS" style="text-decoration:none">
+      <img src="https://img.shields.io/github/stars/frknkrc44/HMA-OSS?label=Stars&logo=github">
     </a>
-    <a href="https://github.com/Mocheng778/Apke_OSS/actions" style="text-decoration:none">
-      <img src="https://img.shields.io/github/actions/workflow/status/Mocheng778/Apke_OSS/main.yml?branch=master&logo=github">
+    <a href="https://github.com/frknkrc44/HMA-OSS/actions" style="text-decoration:none">
+      <img src="https://img.shields.io/github/actions/workflow/status/frknkrc44/HMA-OSS/main.yml?branch=master&logo=github">
     </a>
-    <a href="https://github.com/Mocheng778/Apke_OSS/releases/latest" style="text-decoration:none">
-      <img src="https://img.shields.io/github/v/release/Mocheng778/Apke_OSS?label=Release">
+    <a href="https://github.com/frknkrc44/HMA-OSS/releases/latest" style="text-decoration:none">
+      <img src="https://img.shields.io/github/v/release/frknkrc44/HMA-OSS?label=Release">
     </a>
-    <a href="https://github.com/Mocheng778/Apke_OSS/releases/latest" style="text-decoration:none">
-      <img src="https://img.shields.io/github/downloads/Mocheng778/Apke_OSS/total">
+    <a href="https://github.com/frknkrc44/HMA-OSS/releases/latest" style="text-decoration:none">
+      <img src="https://img.shields.io/github/downloads/frknkrc44/HMA-OSS/total">
     </a>
     <a href="https://t.me/aerathfuns" style="text-decoration:none">
       <img src="https://img.shields.io/badge/Telegram-Channel-blue.svg?logo=telegram">
     </a>
     <a href="https://choosealicense.com/licenses/gpl-3.0/" style="text-decoration:none">
-      <img src="https://img.shields.io/github/license/Mocheng778/Apke_OSS?label=License">
+      <img src="https://img.shields.io/github/license/frknkrc44/HMA-OSS?label=License">
     </a>
   </p>
 </div>
 
 ---
-
-> **About Apke_oss**：Apke_oss 是基于 [frknkrc44/HMA-OSS](https://github.com/frknkrc44/HMA-OSS)（AGPL-3.0）的开源分支，在此感谢上游作者及所有贡献者。本项目将应用品牌更名为 **Apke_oss**，后续功能演进在本仓库进行。
 
 - **English**
 - [中文（简体）](README_zh_CN.md)
@@ -45,12 +43,12 @@ Additionally, some apps use various loopholes to acquire your app list, in order
 
 This module can work as an Zygisk module to hide apps or reject app list requests.
 
-## About Apke_oss
+## About HMA-OSS
 
-https://github.com/Mocheng778/Apke_OSS/wiki
+https://github.com/frknkrc44/HMA-OSS/wiki
 
 ## I want to contribute translation
 You can contribute translation [here](https://crowdin.com/project/frknkrc44-hma-oss).
 
 ## Update log
-[Reference to the commits page](https://github.com/Mocheng778/Apke_OSS/commits)
+[Reference to the commits page](https://github.com/frknkrc44/HMA-OSS/commits)

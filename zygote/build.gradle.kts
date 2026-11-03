@@ -100,9 +100,9 @@ zygisk {
 
     // module properties
     id = "hma_oss_zygisk"
-    name = "Apke_oss Zygisk"
+    name = "HMA-OSS Zygisk"
     author = "frknkrc44"
-    description = "A Zygisk backend for Apke_oss"
+    description = "A Zygisk backend for HMA-OSS"
     entrypoint = "org.frknkrc44.hma_oss.zygote.ZygoteEntry"
     archiveName = "${rootProject.name}-ZYGISK-${android.defaultConfig.versionName}"
     updateJson = "https://furkank.net/hma_oss_update_checker.json"

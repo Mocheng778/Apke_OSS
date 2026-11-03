@@ -38,7 +38,7 @@
     <string name="home_xposed_not_activated">โมดูลยังไม่ได้เปิดใช้งาน</string>
     <string name="home_xposed_service_on">บริการระบบกำลังทำงาน [%d]</string>
     <string name="home_xposed_service_off">บริการระบบไม่ทำงาน</string>
-    <string name="home_xposed_filter_count">Apke_oss ได้กรองคำขอทั้งหมด %d รายการ</string>
+    <string name="home_xposed_filter_count">HMA-OSS ได้กรองคำขอทั้งหมด %d รายการ</string>
     <string name="home_manage">จัดการ</string>
     <string name="home_detection_test">ทดสอบการตรวจจับ</string>
     <string name="home_download_test_app_title">ดาวน์โหลดแอปทดสอบ</string>
@@ -265,6 +265,6 @@ Vold ข้อมูลแอป: %s
     <string name="dark_theme_off">ปิดตลอดเวลา</string>
     <string name="dark_theme_on">เปิดตลอดเวลา</string>
     <string name="sick_mode_title">เปิดใช้งานโหมดปัญหา</string>
-    <string name="sick_mode_description">Apke_oss ตรวจพบโมดูลที่อาจขัดแย้งกันและได้จำกัดการทำงานบางส่วน</string>
-    <string name="sick_mode_notice">การตั้งค่า HMA/HMAL สามารถใช้งานร่วมกับ Apke_oss ได้ และคุณสามารถเริ่มใช้งานด้วยการตั้งค่าเดิมของคุณได้ แต่ต้องถอนการติดตั้ง HMA/HMAL แล้วรีบูตเครื่องก่อน</string>
+    <string name="sick_mode_description">HMA-OSS ตรวจพบโมดูลที่อาจขัดแย้งกันและได้จำกัดการทำงานบางส่วน</string>
+    <string name="sick_mode_notice">การตั้งค่า HMA/HMAL สามารถใช้งานร่วมกับ HMA-OSS ได้ และคุณสามารถเริ่มใช้งานด้วยการตั้งค่าเดิมของคุณได้ แต่ต้องถอนการติดตั้ง HMA/HMAL แล้วรีบูตเครื่องก่อน</string>
 </resources>

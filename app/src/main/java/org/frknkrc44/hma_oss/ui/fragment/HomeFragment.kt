@@ -463,7 +463,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         when (item.itemId) {
             R.id.menu_info -> {
                 startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    data = "https://github.com/Mocheng778/Apke_OSS/wiki/About-HMA%E2%80%90OSS".toUri()
+                    data = "https://github.com/frknkrc44/HMA-OSS/wiki/About-HMA%E2%80%90OSS".toUri()
                 })
             }
         }

@@ -107,7 +107,7 @@ class BulkConfigWizardFragment : Fragment(R.layout.fragment_bulk_config_wizard) 
         when (item.itemId) {
             R.id.menu_info -> {
                 startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    data = "https://github.com/Mocheng778/Apke_OSS/wiki/About-HMA%E2%80%90OSS#bulk-config-wizard".toUri()
+                    data = "https://github.com/frknkrc44/HMA-OSS/wiki/About-HMA%E2%80%90OSS#bulk-config-wizard".toUri()
                 })
             }
         }
