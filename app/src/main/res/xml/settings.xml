@@ -152,4 +152,11 @@
             app:singleLineTitle="false"
             android:title="@string/settings_disable_update" />
     </PreferenceCategory>
+
+    <Preference
+        android:icon="@drawable/outline_info_24"
+        android:key="about"
+        android:order="999"
+        app:singleLineTitle="false"
+        android:title="@string/title_about" />
 </PreferenceScreen>

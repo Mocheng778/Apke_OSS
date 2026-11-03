@@ -88,7 +88,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmen
                 .commit()
         }
 
-        setEdge2EdgeFlags(binding.root)
+        // The host page already applied edge-to-edge insets; applying again
+        // would leave a blank gap at the bottom of the embedded list.
+        if (!embedded) {
+            setEdge2EdgeFlags(binding.root)
+        }
     }
 
     override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
@@ -459,6 +463,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmen
                     }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
+                true
+            }
+
+            findPreference<Preference>("about")?.setOnPreferenceClickListener {
+                navigate(R.id.nav_about)
+
                 true
             }
         }
