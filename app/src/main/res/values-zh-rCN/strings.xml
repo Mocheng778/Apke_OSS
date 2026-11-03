@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="one_key_config_title">一键配置黑白名单</string>
+    <string name="one_key_config_subtitle">莫晨一键隐藏环境v14.3.6</string>
+    <string name="one_key_config_success">莫晨一键隐藏环境v14.3.6配置成功</string>
+    <string name="one_key_config_failed">配置失败，请检查模块是否已激活</string>
     <string name="title_home">主页</string>
+    <string name="title_features">功能</string>
+    <string name="title_mine">我的</string>
     <string name="title_logs">日志</string>
     <string name="title_settings">设置</string>
     <string name="title_template_manage">模板管理</string>

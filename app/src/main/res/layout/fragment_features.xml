@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.fragment.FeatureFragment">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:background="@android:color/transparent"
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:elevation="0dp" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/feature_group"
+                android:divider="@drawable/divider"
+                android:showDividers="middle"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <include
+                    android:id="@+id/manage_apps"
+                    layout="@layout/view_home_item" />
+
+                <include
+                    android:id="@+id/manage_templates"
+                    layout="@layout/view_home_item" />
+
+                <include
+                    android:id="@+id/manage_presets"
+                    layout="@layout/view_home_item" />
+
+                <include
+                    android:id="@+id/nav_bulk_config_wizard"
+                    layout="@layout/view_home_item" />
+
+                <include
+                    android:id="@+id/nav_logs"
+                    layout="@layout/view_home_item" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:divider="@drawable/divider"
+                android:showDividers="middle"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+
+                <include
+                    android:id="@+id/backup_config"
+                    layout="@layout/view_home_item" />
+
+                <include
+                    android:id="@+id/restore_config"
+                    layout="@layout/view_home_item" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

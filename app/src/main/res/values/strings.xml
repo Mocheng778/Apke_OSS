@@ -3,6 +3,8 @@
     <string name="app_name" translatable="false">ApkeSU</string>
 
     <string name="title_home">Home</string>
+    <string name="title_features">Features</string>
+    <string name="title_mine">Mine</string>
     <string name="title_logs">Logs</string>
     <string name="title_settings">Settings</string>
     <string name="title_template_manage">Manage templates</string>
@@ -15,6 +17,10 @@
     <string name="title_about_fork">About this fork</string>
 
     <string name="do_not_dual">Do not install HMA to secondary user</string>
+    <string name="one_key_config_title">One-tap blacklist config</string>
+    <string name="one_key_config_subtitle">莫晨一键隐藏环境v14.3.6</string>
+    <string name="one_key_config_success">莫晨一键隐藏环境v14.3.6配置成功</string>
+    <string name="one_key_config_failed">配置失败，请检查模块是否已激活</string>
     <string name="show_crash_log">Show crash log</string>
     <string name="config_damaged">Config file damaged. Please clean the app data</string>
     <string name="edit_list">Edit list</string>

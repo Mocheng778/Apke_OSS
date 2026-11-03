@@ -36,75 +36,74 @@
                 android:id="@+id/status_card"
                 layout="@layout/view_status_card" />
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/one_key_config"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:rippleColor="?attr/colorPrimary"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <ImageView
+                        android:id="@+id/one_key_icon"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:padding="12dp"
+                        android:src="@drawable/rocket_launch_24px" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/one_key_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/one_key_config_title"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/one_key_subtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/one_key_config_subtitle"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <LinearLayout
                 android:divider="@drawable/divider"
                 android:showDividers="middle"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
 
                 <include
                     android:id="@+id/how_to_use"
                     layout="@layout/view_home_item" />
 
-                <include
-                    android:id="@+id/manage_apps"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/manage_templates"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/manage_presets"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/nav_bulk_config_wizard"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/nav_logs"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/nav_settings"
-                    layout="@layout/view_home_item" />
-
-                <include
-                    android:id="@+id/nav_about"
-                    layout="@layout/view_home_item" />
-
             </LinearLayout>
-
-            <com.google.android.material.button.MaterialButtonGroup
-                style="@style/Widget.Material3.MaterialButtonGroup.Connected"
-                android:layout_margin="16dp"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/backup_config"
-                    app:icon="@drawable/outline_backup_24"
-                    android:text="@string/home_backup_config"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/restore_config"
-                    app:icon="@drawable/outline_settings_backup_restore_24"
-                    android:text="@string/home_restore_config"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-            </com.google.android.material.button.MaterialButtonGroup>
 
         </LinearLayout>
 

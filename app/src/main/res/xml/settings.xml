@@ -130,16 +130,6 @@
 
     <PreferenceCategory android:title="@string/settings_service">
         <Preference
-            android:icon="@drawable/outline_delete_24"
-            android:key="clearUninstalledPackageConfigs"
-            android:summary="@string/settings_clear_uninstalled_app_configs_summary"
-            android:title="@string/settings_clear_uninstalled_app_configs" />
-        <Preference
-            android:icon="@drawable/reset_settings_24px"
-            android:key="resetDefault"
-            android:summary="@string/settings_reset_default_summary"
-            android:title="@string/settings_reset_default" />
-        <Preference
             android:icon="@drawable/outline_cleaning_services_24"
             android:key="forceCleanEnv"
             android:summary="@string/settings_force_clean_env_summary"

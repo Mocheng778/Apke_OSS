@@ -394,38 +394,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmen
                     }
             }
 
-            findPreference<Preference>("clearUninstalledPackageConfigs")?.apply {
-                setOnPreferenceClickListener {
-                    MaterialAlertDialogBuilder(requireContext())
-                        .setTitle(R.string.settings_clear_uninstalled_app_configs)
-                        .setMessage(R.string.settings_no_undone_warning)
-                        .setPositiveButton(android.R.string.ok) { _, _ ->
-                            val progressDialog = MaterialAlertDialogBuilder(requireContext())
-                                .setTitle(R.string.settings_clear_uninstalled_app_configs)
-                                .setView(R.layout.dialog_loading)
-                                .setCancelable(false)
-                                .create()
-
-                            progressDialog.show()
-
-                            ConfigManager.clearUninstalledAppConfigs { isSuccess ->
-                                lifecycleScope.launch {
-                                    progressDialog.dismiss()
-
-                                    if (isSuccess) {
-                                        showToast(android.R.string.ok)
-                                    }
-                                }
-                            }
-                        }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .setCancelable(false)
-                        .show()
-
-                    true
-                }
-            }
-
             findPreference<SwitchPreferenceCompat>("blackDarkTheme")?.apply {
                 isEnabled = findPreference<SwitchPreferenceCompat>("systemWallpaper")?.isChecked != true
                 setOnPreferenceChangeListener { _, _ ->
@@ -471,21 +439,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), PreferenceFragmen
 
                     true
                 }
-            }
-
-            findPreference<Preference>("resetDefault")?.setOnPreferenceClickListener {
-                if (ServiceClient.serviceVersion != 0) {
-                    MaterialAlertDialogBuilder(requireContext())
-                        .setTitle(R.string.settings_reset_default)
-                        .setMessage(R.string.settings_irreversible_confirmation)
-                        .setPositiveButton(R.string.yes) { _, _ ->
-                            ConfigManager.resetConfig()
-                            showToast(android.R.string.ok)
-                        }
-                        .setNegativeButton(R.string.no, null)
-                        .show()
-                } else showToast(R.string.home_xposed_service_off)
-                true
             }
 
             findPreference<Preference>("forceCleanEnv")?.setOnPreferenceClickListener {

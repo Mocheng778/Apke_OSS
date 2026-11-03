@@ -22,6 +22,7 @@ import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import dev.androidbroadcast.vbpd.viewBinding
 import icu.nullptr.hidemyapplist.MyApp.Companion.hmaApp
 import icu.nullptr.hidemyapplist.common.Constants.ENABLE_INTERNET_OFF
@@ -32,6 +33,7 @@ import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_LOADING
 import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_NO_HOOKS
 import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_UNKNOWN
 import icu.nullptr.hidemyapplist.data.fetchLatestUpdate
+import icu.nullptr.hidemyapplist.service.ConfigManager
 import icu.nullptr.hidemyapplist.service.PrefManager
 import icu.nullptr.hidemyapplist.service.ServiceClient
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.attrDrawable
@@ -202,86 +204,23 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
-        with(binding.manageApps) {
-            text1.text = getString(R.string.title_app_manage)
-            icon.setImageResource(R.drawable.outline_android_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_app_manage)
-            }
-        }
-
-        with(binding.manageTemplates) {
-            text1.text = getString(R.string.title_template_manage)
-            icon.setImageResource(R.drawable.ic_outline_layers_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_template_manage)
-            }
-        }
-
-        with(binding.managePresets) {
-            text1.text = getString(R.string.title_preset_manage)
-            icon.setImageResource(R.drawable.baseline_my_location_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_presets)
-            }
-        }
-
-        with(binding.navBulkConfigWizard) {
-            text1.text = getString(R.string.title_bulk_config_wizard)
-            icon.setImageResource(R.drawable.outline_storage_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_bulk_config_wizard)
-            }
-        }
-
-        with(binding.navLogs) {
-            text1.text = getString(R.string.title_logs)
-            icon.setImageResource(R.drawable.outline_assignment_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_logs)
-            }
-        }
-
-        with(binding.navSettings) {
-            text1.text = getString(R.string.title_settings)
-            icon.setImageResource(R.drawable.outline_settings_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_settings)
-            }
-        }
-
-        with(binding.navAbout) {
-            text1.text = getString(R.string.title_about)
-            icon.setImageResource(R.drawable.outline_info_24)
-            root.setOnClickListener {
-                navigate(R.id.nav_about)
-            }
-        }
-
-        with(binding.backupConfig) {
-            if (PrefManager.systemWallpaper) background.alpha = 0xAA
-
-            setOnClickListener {
-                navigate(
-                    R.id.nav_backup_restore,
-                    BackupRestoreFragmentArgs(true).toBundle()
-                )
-            }
-        }
-
-        with(binding.restoreConfig) {
-            if (PrefManager.systemWallpaper) background.alpha = 0xAA
-
-            setOnClickListener {
-                navigate(
-                    R.id.nav_backup_restore,
-                    BackupRestoreFragmentArgs(false).toBundle()
-                )
-            }
+        binding.oneKeyConfig.setOnClickListener {
+            applyOneKeyConfig()
         }
 
         lifecycleScope.launch {
             loadDialogs()
+        }
+    }
+
+    private fun applyOneKeyConfig() {
+        try {
+            val json = requireContext().assets.open("config.json").bufferedReader().use { it.readText() }
+            ConfigManager.importConfig(json)
+            hmaApp.loadConfiguration()
+            Snackbar.make(requireView(), R.string.one_key_config_success, Snackbar.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Snackbar.make(requireView(), R.string.one_key_config_failed, Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -390,13 +329,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         val isHooks = !isNoHooks && isWorking
 
-        binding.manageApps.root.isVisible = isHooks
-        binding.manageTemplates.root.isVisible = isHooks
-        binding.managePresets.root.isVisible = isHooks
-        binding.navBulkConfigWizard.root.isVisible = isHooks
-        binding.navLogs.root.isVisible = isWorking
-        binding.navSettings.root.isVisible = isWorking
-        (binding.backupConfig.parent as ViewGroup).isVisible = isHooks
+        binding.oneKeyConfig.isVisible = isHooks
     }
 
     private fun setStatusIcon(@DrawableRes res: Int) {

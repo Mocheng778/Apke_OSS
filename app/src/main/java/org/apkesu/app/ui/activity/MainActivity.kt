@@ -49,6 +49,16 @@ class MainActivity : AppCompatActivity() {
 
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val navController = findNavController(R.id.nav_host_fragment)
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            if (item.itemId != binding.bottomNav.selectedItemId) {
+                navController.navigate(item.itemId)
+                true
+            } else {
+                false
+            }
+        }
     }
 
     override fun onApplyThemeResource(theme: Resources.Theme, resid: Int, first: Boolean) {
