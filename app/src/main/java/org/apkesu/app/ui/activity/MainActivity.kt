@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
     private fun styleBottomNavigation(binding: ActivityMainBinding) {
         val indicatorColor = ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-            intArrayOf(0xFFFF7EB6.toInt(), Color.TRANSPARENT)
+            intArrayOf(0xFFFF9FC0.toInt(), Color.TRANSPARENT)
         )
         binding.bottomNav.itemActiveIndicatorColor = indicatorColor
 

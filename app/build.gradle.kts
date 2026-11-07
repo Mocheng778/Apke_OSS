@@ -34,7 +34,7 @@ materialThemeBuilder {
             "DeepOrange" to "FF5722",
             "Brown" to "795548",
             "BlueGrey" to "607D8F",
-            "Sakura" to "EC87AE"
+            "Sakura" to "FF9FC0"
         )) {
             create("Material$name") {
                 lightThemeFormat = "ThemeOverlay.Light.%s"

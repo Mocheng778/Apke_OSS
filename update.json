@@ -1,6 +1,6 @@
 {
-  "version": "v1.2.0",
-  "versionCode": 10200,
-  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.0/ApkeSU-v1.2.0-release.zip",
-  "changelog": "ApkeSU v1.2.0：设置项合并到「我的」页；备份/还原配置移到主页；Telegram 联系方式更新"
+  "version": "v1.2.2",
+  "versionCode": 10202,
+  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.2/ApkeSU-v1.2.2-release.zip",
+  "changelog": "ApkeSU v1.2.2：Bocchi 粉手账涂鸦风 UI 重设计；恢复并增强应用隐藏能力"
 }
