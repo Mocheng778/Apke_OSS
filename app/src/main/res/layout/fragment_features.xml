@@ -71,7 +71,7 @@
                                 android:layout_height="30dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/outline_android_24"
-                                app:tint="?attr/colorOnPrimaryContainer" />
+                                app:tint="@android:color/white" />
 
                         </FrameLayout>
 
@@ -117,7 +117,7 @@
                                 android:layout_height="30dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_outline_layers_24"
-                                app:tint="?attr/colorOnPrimaryContainer" />
+                                app:tint="@android:color/white" />
 
                         </FrameLayout>
 
@@ -173,7 +173,7 @@
                                 android:layout_height="30dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/baseline_my_location_24"
-                                app:tint="?attr/colorOnPrimaryContainer" />
+                                app:tint="@android:color/white" />
 
                         </FrameLayout>
 
@@ -219,7 +219,7 @@
                                 android:layout_height="30dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/outline_storage_24"
-                                app:tint="?attr/colorOnPrimaryContainer" />
+                                app:tint="@android:color/white" />
 
                         </FrameLayout>
 
@@ -268,7 +268,7 @@
                             android:layout_height="30dp"
                             android:layout_gravity="center"
                             android:src="@drawable/outline_assignment_24"
-                            app:tint="?attr/colorOnPrimaryContainer" />
+                            app:tint="@android:color/white" />
 
                     </FrameLayout>
 

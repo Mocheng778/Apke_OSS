@@ -1,8 +1,10 @@
 package org.apkesu.app.ui.activity
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -60,6 +62,24 @@ class MainActivity : AppCompatActivity() {
                 false
             }
         }
+
+        styleBottomNavigation(binding)
+    }
+
+    private fun styleBottomNavigation(binding: ActivityMainBinding) {
+        val indicatorColor = ColorStateList(
+            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+            intArrayOf(0xFFFF7EB6.toInt(), Color.TRANSPARENT)
+        )
+        binding.bottomNav.itemActiveIndicatorColor = indicatorColor
+
+        val states = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf(-android.R.attr.state_checked)
+        )
+        val colors = intArrayOf(Color.WHITE, 0x99FFFFFF.toInt())
+        binding.bottomNav.itemTextColor = ColorStateList(states, colors)
+        binding.bottomNav.itemIconTintList = ColorStateList(states, colors)
     }
 
     override fun onApplyThemeResource(theme: Resources.Theme, resid: Int, first: Boolean) {

@@ -40,6 +40,7 @@ import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.attrDrawable
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.getColor
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.homeItemBackgroundColor
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.themeColor
+import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.asDrawable
 import icu.nullptr.hidemyapplist.ui.util.dpToPx
 import icu.nullptr.hidemyapplist.ui.util.isTestBuild
 import icu.nullptr.hidemyapplist.ui.util.navigate
@@ -275,19 +276,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val isNoHooks = isCrashed || workMode == MANAGER_WORK_MODE_NO_HOOKS
         val isVersionMismatch = ServiceClient.serviceVersionName != BuildConfig.VERSION_NAME
 
-        var color = when {
-            !isWorking -> getColor(R.color.invalid)
-            isNoHooks -> getColor(R.color.md_theme_material_amber_light_error)
-            isVersionMismatch -> themeColor(android.R.attr.colorError)
-            else -> themeColor(android.R.attr.colorPrimary)
-        }
-
-        if (PrefManager.systemWallpaper) {
-            color -= 0x55000000
+        val backgroundRes = when {
+            !isWorking -> R.drawable.status_card_inactive
+            isNoHooks -> R.drawable.status_card_error
+            else -> R.drawable.status_card_normal
         }
 
         with(binding.statusCard) {
-            root.setCardBackgroundColor(color)
+            statusCardContent.background = backgroundRes.asDrawable(requireContext())
 
             if (isWorking) {
                 if (isNoHooks) {
