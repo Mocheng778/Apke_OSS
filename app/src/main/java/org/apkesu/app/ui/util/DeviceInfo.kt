@@ -218,6 +218,8 @@ object DeviceInfo {
         KERNEL_OK("已启用（内核已打补丁）"),
         TOOL_ONLY("未生效：内核未带 SUSFS 补丁"),
         KERNEL_NOTOOL("内核已支持，缺少 ksu_susfs 工具"),
+        /** 内核有 SUSFS 补丁，但版本与用户态 ksu_susfs 工具不兼容（如工具要求 v1.5.3+ 而内核更早）。 */
+        VERSION_MISMATCH("检测到 SUSFS（内核版本过旧，ksu_susfs 要求 v1.5.3+）"),
         NONE("未检测到（内核与用户态模块均未部署）"),
     }
 
@@ -252,6 +254,10 @@ object DeviceInfo {
         val susfsBin: String,
         val susfsFeatures: String,
         val susfsVariant: String,
+        /** 内核 SUSFS 版本与用户态 ksu_susfs 工具不兼容（如工具要求 v1.5.3+ 而内核更早）。 */
+        val susfsVersionMismatch: Boolean = false,
+        /** 版本不匹配时 ksu_susfs 返回的真实提示原文（如 "Requires susfs v1.5.3+"）。 */
+        val susfsMismatchMsg: String = "",
         /** SUSFS 独立内核模块 (.ko) 路径；非空即探测到可用的独立 LKM，可经 insmod 动态加载。 */
         val susfsKo: String,
         /** Root 管理器类型，决定 SUSFS 原生调用入口（ksud / 内置管理器 / susfs4ksu）。 */
@@ -326,6 +332,9 @@ object DeviceInfo {
             "KERNEL_NOTOOL" -> SusfsState.KERNEL_NOTOOL
             else -> SusfsState.NONE
         }
+        // 版本不匹配优先于上述状态：内核有补丁但 ksu_susfs 工具拒绝通讯（如要求 v1.5.3+）。
+        val susfsMismatch = map["SUSMISMATCH"] == "1"
+        val finalSusfsState = if (susfsMismatch) SusfsState.VERSION_MISMATCH else susfsState
 
         // 管理器类型：归一化为 SUKISU / KSU_NEXT / KSU / STERSU / APATCH / MAGISK / UNKNOWN，
         // App 据此选择「从各管理器的 GKI 原生调用 SUSFS」的入口。
@@ -354,10 +363,12 @@ object DeviceInfo {
             workMode = workMode,
             susfs = map["SUSFS"] == "1",
             susfsVersion = v("SUSFSVER", ""),
-            susfsState = susfsState,
+            susfsState = finalSusfsState,
             susfsBin = v("SUSBIN", ""),
             susfsFeatures = v("SUSFSFEAT", ""),
             susfsVariant = v("SUSFSVAR", ""),
+            susfsVersionMismatch = susfsMismatch,
+            susfsMismatchMsg = v("SUSMSG", ""),
             susfsKo = v("KO", ""),
             managerType = managerType,
             ksudPath = v("KSUD", ""),
