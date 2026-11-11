@@ -93,12 +93,16 @@ object DeviceInfo {
             "/data/adb/ksu/bin/ksu_susfs",
             "/data/adb/ksu/susfs4ksu/ksu_susfs",
             "/data/adb/modules/susfs4ksu/ksu_susfs",
+            "/data/adb/modules/susfs4ksu/bin/ksu_susfs",
             "/data/adb/susfs4ksu/ksu_susfs",
+            "/data/adb/susfs/bin/ksu_susfs",
+            "/data/adb/ksu/susfs/ksu_susfs",
+            "/system/bin/ksu_susfs",
         )
         val checks = candidates.joinToString("; ") { "[ -x $it ] && echo $it" }
         val viaSu = runShell(
-            "su -c '$checks; command -v ksu_susfs'",
-            4
+            "su -c '$checks; command -v ksu_susfs; find /data/adb -maxdepth 6 -name ksu_susfs -type f -executable 2>/dev/null | head -n1'",
+            5
         )?.trim()?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
         return viaSu ?: candidates.firstOrNull { fileExists(it) }
     }

@@ -15,7 +15,9 @@ ACTION_BAK="$MODDIR/action.sh.bak"
 DISABLE="$MODDIR/disable"
 
 # INFO: Resets ApkeSU's module.prop to its default state which is saved upon installation.
-cp "$MODDIR/module.prop.bak" "$MODDIR/module.prop"
+if [ -f "$MODDIR/module.prop.bak" ]; then
+    cp "$MODDIR/module.prop.bak" "$MODDIR/module.prop"
+fi
 
 if [ -f "$DISABLE" ]; then
     if [ -f "$ACTION" ] && [ ! -f "$ACTION_BAK" ]; then

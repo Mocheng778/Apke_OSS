@@ -187,9 +187,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             add(R.string.susfs_info_selinux to env.selinux)
             add(R.string.susfs_info_fingerprint to env.fingerprint)
             add(R.string.susfs_info_susfs to susfsText)
-            if (env.susfsBin.isNotEmpty()) {
-                add(R.string.susfs_info_susfs_bin to env.susfsBin)
-            }
+            // 始终展示 ksu_susfs 工具状态；为空即「未找到」，明确告知用户需安装 susfs4ksu 模块
+            add(
+                R.string.susfs_info_susfs_bin to
+                if (env.susfsBin.isNotEmpty()) env.susfsBin
+                else getString(R.string.susfs_info_susfs_bin_missing)
+            )
             if (env.susfsVariant.isNotEmpty()) {
                 add(R.string.susfs_info_susfs_variant to env.susfsVariant)
             }
@@ -412,10 +415,11 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
         // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数
         lines += "BIN=''"
-        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
+        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/bin/ksu_susfs /data/adb/susfs4ksu/ksu_susfs /data/adb/susfs/bin/ksu_susfs /data/adb/ksu/susfs/ksu_susfs /system/bin/ksu_susfs; do"
         lines += "  [ -x \"\$b\" ] && BIN=\"\$b\" && break"
         lines += "done"
         lines += "[ -z \"\$BIN\" ] && BIN=\$(command -v ksu_susfs 2>/dev/null)"
+        lines += "[ -z \"\$BIN\" ] && BIN=\$(find /data/adb -maxdepth 6 -name ksu_susfs -type f -executable 2>/dev/null | head -n1)"
         lines += "APPLIED=0"
         lines += "if [ -n \"\$BIN\" ]; then"
         for (path in sanitized) {

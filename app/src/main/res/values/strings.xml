@@ -355,6 +355,7 @@
     <string name="susfs_info_susfs_yes">已启用</string>
     <string name="susfs_info_susfs_no">未检测到</string>
     <string name="susfs_info_susfs_bin">ksu_susfs 工具</string>
+    <string name="susfs_info_susfs_bin_missing">未找到（请先安装 susfs4ksu 模块，或在内核中内置 SUSFS）</string>
     <string name="susfs_info_susfs_variant">SUSFS 形态</string>
     <string name="susfs_info_susfs_features">已启用特性</string>
     <string name="susfs_mode_disclaimer">工作模式按 /proc/modules、/sys/module、内核版本与越狱特征互斥判定，只显示一种：LKM 工作模式 / GKI 工作模式 / LKM 越狱工作模式。越狱模式为临时提权，重启后可能失效，且严禁改动任何分区；但路径隐藏走内核内存态 supercall，三种模式下均可正常使用。</string>
@@ -387,7 +388,7 @@
     <string name="susfs_apply_noroot">未检测到 Root，无法写入</string>
     <string name="susfs_select_first">请先选择或添加需要隐藏的路径</string>
     <string name="susfs_loaded">已即时下发，%1$d 条路径已在内核生效（重启后由 susfs4ksu 模块自动恢复）</string>
-    <string name="susfs_apply_no_tool">已保存 %1$d 条配置到 /data/adb/，但缺少 ksu_susfs 工具：请安装 susfs4ksu 模块后重试</string>
+    <string name="susfs_apply_no_tool">已保存 %1$d 条配置到 /data/adb/，但缺少 ksu_susfs 工具：请在 KernelSU / SukiSU / Magisk 中安装 susfs4ksu 模块（提供 ksu_susfs）后重试；越狱模式下也需该模块已落盘到 /data/adb/modules 且可执行</string>
     <string name="susfs_apply_no_kernel">已保存 %1$d 条配置到 /data/adb/，但 0 条生效：当前内核未带 SUSFS 补丁。越狱模式下不能现场刷内核（会格机），需先退出越狱模式、在正常 LKM / GKI 模式下刷入带 SUSFS 补丁的内核后再使用</string>
     <string name="susfs_apply_partial">已下发 %1$d / %2$d 条路径，部分未生效（内核可能未编译对应特性）</string>
     <string name="susfs_hint">路径隐藏要生效需两半：① 内核带 SUSFS 补丁（builtin 或 susfs_guard_lkm 模块）；② 安装 susfs4ksu 用户态模块提供 ksu_susfs 工具。点击「加载并启用」会写入 /data/adb/susfs4ksu/（config.sh / sus_path.txt）持久化，并调用 ksu_susfs add_sus_path 即时下发生效；手动下发的内核规则重启会失效，靠上述配置文件在开机时恢复。全程只写数据区 + 内核内存态 supercall，不改写 boot、system、vendor、vbmeta 等任何分区，不会触发格机；LKM 工作模式 / GKI 工作模式 / LKM 越狱工作模式三种状态下均可照常点「加载并启用」。若上方显示「内核未带 SUSFS 补丁」，则本功能在该设备上无法生效——Magisk 与未打补丁的内核不支持 SUSFS，这取决于内核本身是否带补丁，与当前处于哪种工作模式无关。</string>

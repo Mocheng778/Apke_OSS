@@ -69,10 +69,17 @@ echo "FWVER=$VER"
 # 因此权威判定必须走 ksu_susfs 的 supercall：show version 能返回即内核已打补丁。
 SUSBIN=""
 for B in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs \
-         /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do
+         /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/bin/ksu_susfs \
+         /data/adb/susfs4ksu/ksu_susfs /data/adb/susfs/bin/ksu_susfs \
+         /data/adb/ksu/susfs/ksu_susfs /system/bin/ksu_susfs; do
   if [ -x "$B" ]; then SUSBIN=$B; break; fi
 done
 [ -z "$SUSBIN" ] && SUSBIN=$(command -v ksu_susfs 2>/dev/null)
+# 全盘兜底：覆盖 susfs4ksu 任意安装形态（不同版本/管理器路径不一），
+# 避免「装了却因路径不在白名单而被误报为缺少工具」。
+if [ -z "$SUSBIN" ]; then
+  SUSBIN=$(find /data/adb -maxdepth 6 -name ksu_susfs -type f -executable 2>/dev/null | head -n1)
+fi
 
 SUSV=""
 SUSFEAT=""
