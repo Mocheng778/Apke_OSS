@@ -334,6 +334,8 @@
     <string name="susfs_probe_version_hint">请下拉刷新或重新授权 Root</string>
     <string name="susfs_probe_failed_title">⚠ Root 环境探测未完成</string>
     <string name="susfs_probe_failed">已检测到 Root，但探测脚本未能返回结果，工作模式与 SUSFS 状态无法判定。请确认已在 KernelSU / SukiSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」，且未勾选「隐藏 SU / 限制命令」类选项，然后点「加载并启用」重试。诊断：%1$s</string>
+    <string name="susfs_probe_partial_title">⚠ 部分信息未采集完整</string>
+    <string name="susfs_probe_partial">Root 环境探测被中断，工作模式、模块数等字段可能仍显示旧值或「—」。下方已显示本次成功采集到的字段。可下拉刷新重试；若反复出现，请确认 Root 管理器未限制本应用的 shell 命令。诊断：%1$s</string>
     <string name="susfs_info_probe_diag">探测诊断</string>
     <string name="susfs_version_label">版本：%1$s</string>
     <string name="susfs_root_framework">Root框架</string>
@@ -352,7 +354,7 @@
     <string name="susfs_module_section">SUSFS 内核模块（LKM）· 发行版内置</string>
     <string name="susfs_module_status_label">模块文件</string>
     <string name="susfs_module_status_found">%1$s</string>
-    <string name="susfs_module_status_none">未检测到 .ko（请刷入本模块；内置 ko 位于模块目录 susfs_ko/）</string>
+    <string name="susfs_module_status_none">未检测到内置 .ko：请在 KernelSU / Magisk 中刷入本发行版的模块 ZIP（不是只覆盖安装 manager.apk），刷完重启一次再进本页；ko 位于 /data/adb/modules/apkesu_zygisk/susfs_ko/</string>
     <string name="susfs_module_load">加载内核模块</string>
     <string name="susfs_module_summary">发行版已内置 susfs4ksu-lkm 全套 KMI 的 .ko（8 个：android12-5.10 ~ android17-6.18）。点击上方状态行可手动指定 ko；默认按当前内核 KMI 自动挑选，用 ksud insmod / insmod 动态注入内核，不刷分区、不触碰 boot/system/vendor/vbmeta，保持现有 GKI 配置与 KernelSU KO 不变</string>
     <string name="susfs_module_note">来源：github.com/inforcqb/susfs4ksu-lkm v2.3.0（GPL-2.0）。仅 arm64 / GKI 内核；.ko 需与当前内核 KMI 精确匹配，否则内核会拒绝加载（不会强行加载）。点状态行可切换为手动指定其它 KMI 的 ko</string>
