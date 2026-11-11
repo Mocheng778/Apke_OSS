@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">ApkeSU</string>
+    <string name="app_name" translatable="false">隐藏应用列表-OSS</string>
 
     <string name="title_home">Home</string>
     <string name="title_features">Features</string>
@@ -300,6 +300,66 @@
     <string name="dark_theme_on">Always on</string>
 
     <string name="sick_mode_title">Sick mode is activated</string>
-    <string name="sick_mode_description">ApkeSU detected possibly conflictable modules and limited its functionality</string>
-    <string name="sick_mode_notice">HMA/HMAL configs are compatible with ApkeSU and you can begin to use with your existing config but you need to uninstall HMA/HMAL then reboot at first</string>
+    <string name="sick_mode_description">隐藏应用列表-OSS detected possibly conflictable modules and limited its functionality</string>
+    <string name="sick_mode_notice">HMA/HMAL configs are compatible with 隐藏应用列表-OSS and you can begin to use with your existing config but you need to uninstall HMA/HMAL then reboot at first</string>
+
+    <!-- Home device info panel -->
+    <string name="home_hidden_title">隐藏应用列表-OSS真正隐藏中</string>
+    <string name="home_hidden_title_off">隐藏应用列表-OSS未激活</string>
+    <string name="home_hidden_subtitle_off">请检查 Zygisk 模块是否已激活</string>
+    <string name="home_info_title">设备状态</string>
+    <string name="home_device_label">机型</string>
+    <string name="home_app_count_label">应用数量</string>
+    <string name="home_module_count_label">模块数量</string>
+    <string name="home_env_label">环境检测</string>
+    <string name="home_root_label">Root框架</string>
+    <string name="home_module_count_unknown">需 Root 权限</string>
+    <string name="home_env_ok">环境正常</string>
+    <string name="home_env_unknown">未知</string>
+    <string name="home_root_none">未检测到</string>
+
+    <!-- SUSFS feature -->
+    <string name="title_susfs">SUSFS 路径隐藏</string>
+    <string name="feature_susfs_desc">内核级隐藏敏感路径</string>
+    <string name="feature_one_key_desc">一键应用隐藏配置</string>
+
+    <string name="susfs_status_section">状态</string>
+    <string name="susfs_support_title">SUSFS 内核支持</string>
+    <string name="susfs_support_yes">已启用</string>
+    <string name="susfs_support_no">未检测到（需 SUSFS 补丁内核）</string>
+    <string name="susfs_support_checking">检测中…</string>
+    <string name="susfs_root_framework">Root框架</string>
+    <string name="susfs_load_enable">加载并启用</string>
+    <string name="susfs_load_enable_summary">读取状态、写入配置并尝试立即生效</string>
+    <string name="susfs_jailbreak_mode">越狱模式（兼容模式）</string>
+    <string name="susfs_jailbreak_summary">未检测到 SUSFS 内核时仍强制写入配置</string>
+
+    <string name="susfs_switches_section">隐藏开关</string>
+    <string name="susfs_app_hide">应用隐藏</string>
+    <string name="susfs_app_hide_summary">隐藏 su 与 Root/自定义 ROM 特征</string>
+    <string name="susfs_kernel_spoof">内核伪装</string>
+    <string name="susfs_kernel_spoof_summary">伪装 uname 与 /proc/cmdline</string>
+    <string name="susfs_log_toggle">SUSFS 日志</string>
+    <string name="susfs_log_toggle_summary">记录 SUSFS 运行日志便于排查</string>
+    <string name="susfs_hide_mnt_nonroot">对非 Root 挂载隐藏</string>
+    <string name="susfs_hide_mnt_nonroot_summary">向非 su 进程隐藏 SUSFS 挂载点</string>
+
+    <string name="susfs_paths_section">路径隐藏</string>
+    <string name="susfs_preset_paths">预设敏感路径</string>
+    <string name="susfs_custom_paths">自定义路径</string>
+    <string name="susfs_add_path_hint">输入要隐藏的路径，如 /data/adb/xxx</string>
+    <string name="susfs_add_path">添加</string>
+    <string name="susfs_path_empty">请输入路径</string>
+    <string name="susfs_path_invalid">路径需以 / 开头且不含空格</string>
+    <string name="susfs_path_exists">该路径已存在</string>
+    <string name="susfs_path_added">已添加：%1$s</string>
+    <string name="susfs_remove">移除</string>
+
+    <string name="susfs_apply">写入配置并启用</string>
+    <string name="susfs_apply_success">配置已写入，重启后生效</string>
+    <string name="susfs_apply_failed">写入失败，请确认已授予 Root 权限</string>
+    <string name="susfs_apply_noroot">未检测到 Root，无法写入</string>
+    <string name="susfs_select_first">请先选择或添加需要隐藏的路径</string>
+    <string name="susfs_loaded">已加载并尝试启用，%1$d 条路径已下发</string>
+    <string name="susfs_hint">SUSFS 为 KernelSU 内核特性，需刷入带 SUSFS 补丁的内核并配合 susfs4ksu 模块；配置写入 /data/adb/susfs4ksu/，重启后生效。越狱模式可在无 SUSFS 内核时强制写入。</string>
 </resources>

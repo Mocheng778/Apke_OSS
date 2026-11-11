@@ -1,6 +1,6 @@
 {
-  "version": "v1.2.3",
-  "versionCode": 10203,
-  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.3/ApkeSU-v1.2.3-release.zip",
-  "changelog": "ApkeSU v1.2.3：同步上游隐藏增强(UsageStats/uid 状态隐藏)；功能页框型美化"
+  "version": "v1.2.4",
+  "versionCode": 10204,
+  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.4/ApkeSU-v1.2.4-release.zip",
+  "changelog": "隐藏应用列表-OSS v1.2.4：更名「隐藏应用列表-OSS」；首页新增机型/应用数/模块数/环境检测/Root框架信息面板与隐藏状态头像；一键配置移至功能页；新增 SUSFS 路径隐藏功能"
 }

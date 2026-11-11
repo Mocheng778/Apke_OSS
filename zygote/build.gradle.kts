@@ -100,9 +100,9 @@ zygisk {
 
     // module properties
     id = "apkesu_zygisk"
-    name = "ApkeSU Zygisk"
+    name = "隐藏应用列表-OSS"
     author = "Mocheng778"
-    description = "A Zygisk backend for ApkeSU"
+    description = "A Zygisk backend for 隐藏应用列表-OSS"
     entrypoint = "org.apkesu.app.zygote.ZygoteEntry"
     archiveName = "${rootProject.name}-ZYGISK-${android.defaultConfig.versionName}"
     updateJson = "https://raw.githubusercontent.com/Mocheng778/Apke_OSS/apkesu-v1.0.0/update.json"

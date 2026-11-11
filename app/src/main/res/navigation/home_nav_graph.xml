@@ -30,6 +30,11 @@
         android:label="@string/title_logs" />
 
     <fragment
+        android:id="@+id/nav_susfs"
+        android:name="org.apkesu.app.ui.fragment.SusfsFragment"
+        android:label="@string/title_susfs" />
+
+    <fragment
         android:id="@+id/nav_about"
         android:name="org.apkesu.app.ui.fragment.AboutFragment"
         android:label="@string/title_about" />

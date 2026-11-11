@@ -8,10 +8,10 @@
     tools:context=".ui.fragment.HomeFragment">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:background="@android:color/transparent"
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -30,24 +30,18 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <include
-                android:id="@+id/status_card"
-                layout="@layout/view_status_card" />
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/one_key_config"
+                android:id="@+id/hidden_status_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="12dp"
-                android:clickable="true"
-                android:focusable="true"
+                android:layout_marginTop="8dp"
                 app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:rippleColor="?attr/colorPrimary"
                 app:strokeColor="#33FF9FC0"
                 app:strokeWidth="1.5dp">
 
@@ -59,17 +53,17 @@
                     android:padding="20dp">
 
                     <FrameLayout
-                        android:id="@+id/one_key_icon"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:background="@drawable/feature_icon_circle">
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:background="@drawable/home_avatar_ring">
 
                         <ImageView
-                            android:layout_width="30dp"
-                            android:layout_height="30dp"
+                            android:id="@+id/home_avatar"
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/rocket_launch_24px"
-                            app:tint="@android:color/white" />
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/home_avatar" />
 
                     </FrameLayout>
 
@@ -80,22 +74,78 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/one_key_title"
+                            android:id="@+id/home_hidden_title"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/one_key_config_title"
-                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:text="@string/home_hidden_title_off"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/one_key_subtitle"
+                            android:id="@+id/home_hidden_subtitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="@string/one_key_config_subtitle"
-                            android:textAppearance="@style/TextAppearance.Material3.BodySmall" />
+                            android:text="@string/home_hidden_subtitle_off"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <include
+                android:id="@+id/status_card"
+                layout="@layout/view_status_card" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="4dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#33A8C653"
+                app:strokeWidth="1.5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="10dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="4dp"
+                        android:text="@string/home_info_title"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                        android:textStyle="bold" />
+
+                    <include
+                        android:id="@+id/info_device"
+                        layout="@layout/view_home_info_row" />
+
+                    <include
+                        android:id="@+id/info_app_count"
+                        layout="@layout/view_home_info_row" />
+
+                    <include
+                        android:id="@+id/info_module_count"
+                        layout="@layout/view_home_info_row" />
+
+                    <include
+                        android:id="@+id/info_env"
+                        layout="@layout/view_home_info_row" />
+
+                    <include
+                        android:id="@+id/info_root"
+                        layout="@layout/view_home_info_row" />
 
                 </LinearLayout>
 
@@ -208,12 +258,12 @@
             </LinearLayout>
 
             <LinearLayout
-                android:divider="@drawable/divider"
-                android:showDividers="middle"
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
+                android:layout_marginTop="16dp"
+                android:divider="@drawable/divider"
+                android:orientation="vertical"
+                android:showDividers="middle">
 
                 <include
                     android:id="@+id/how_to_use"

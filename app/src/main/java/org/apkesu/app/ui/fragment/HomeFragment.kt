@@ -22,7 +22,6 @@ import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import dev.androidbroadcast.vbpd.viewBinding
 import icu.nullptr.hidemyapplist.MyApp.Companion.hmaApp
 import icu.nullptr.hidemyapplist.common.Constants.ENABLE_INTERNET_OFF
@@ -33,7 +32,6 @@ import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_LOADING
 import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_NO_HOOKS
 import icu.nullptr.hidemyapplist.common.Constants.MANAGER_WORK_MODE_UNKNOWN
 import icu.nullptr.hidemyapplist.data.fetchLatestUpdate
-import icu.nullptr.hidemyapplist.service.ConfigManager
 import icu.nullptr.hidemyapplist.service.PrefManager
 import icu.nullptr.hidemyapplist.service.ServiceClient
 import icu.nullptr.hidemyapplist.ui.util.ThemeUtils.attrDrawable
@@ -53,6 +51,7 @@ import kotlinx.coroutines.withContext
 import org.apkesu.app.BuildConfig
 import org.apkesu.app.R
 import org.apkesu.app.databinding.FragmentHomeBinding
+import org.apkesu.app.ui.util.DeviceInfo
 import kotlin.concurrent.thread
 
 /**
@@ -205,9 +204,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
-        binding.oneKeyConfig.setOnClickListener {
-            applyOneKeyConfig()
-        }
+        loadDeviceInfo()
 
         with(binding.backupConfig) {
             setOnClickListener {
@@ -232,14 +229,45 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    private fun applyOneKeyConfig() {
-        try {
-            val json = requireContext().assets.open("config.json").bufferedReader().use { it.readText() }
-            ConfigManager.importConfig(json)
-            hmaApp.loadConfiguration()
-            Snackbar.make(requireView(), R.string.one_key_config_success, Snackbar.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Snackbar.make(requireView(), R.string.one_key_config_failed, Snackbar.LENGTH_SHORT).show()
+    private fun loadDeviceInfo() {
+        // 同步可得的即时信息
+        with(binding.infoDevice) {
+            infoRowIcon.setImageResource(R.drawable.outline_android_24)
+            infoRowLabel.setText(R.string.home_device_label)
+            infoRowValue.text = DeviceInfo.deviceModel()
+        }
+        with(binding.infoAppCount) {
+            infoRowIcon.setImageResource(R.drawable.baseline_apps_24)
+            infoRowLabel.setText(R.string.home_app_count_label)
+            infoRowValue.text = DeviceInfo.installedAppCount(requireContext()).toString()
+        }
+
+        // 需要 Root 的探测放到后台线程
+        thread {
+            val moduleCount = DeviceInfo.moduleCount()
+            val env = "${DeviceInfo.selinuxMode()} · Zygisk ${DeviceInfo.zygiskStatus()}"
+            val root = DeviceInfo.rootFramework()
+
+            if (isAdded) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    with(binding.infoModuleCount) {
+                        infoRowIcon.setImageResource(R.drawable.outline_storage_24)
+                        infoRowLabel.setText(R.string.home_module_count_label)
+                        infoRowValue.text = moduleCount?.toString()
+                            ?: getString(R.string.home_module_count_unknown)
+                    }
+                    with(binding.infoEnv) {
+                        infoRowIcon.setImageResource(R.drawable.outline_bug_report_24)
+                        infoRowLabel.setText(R.string.home_env_label)
+                        infoRowValue.text = env
+                    }
+                    with(binding.infoRoot) {
+                        infoRowIcon.setImageResource(R.drawable.plug_connect_24px)
+                        infoRowLabel.setText(R.string.home_root_label)
+                        infoRowValue.text = root
+                    }
+                }
+            }
         }
     }
 
@@ -341,9 +369,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 moduleStatus, moduleStatus.textColors)
         }
 
-        val isHooks = !isNoHooks && isWorking
+        val isHidden = isWorking && !isNoHooks
 
-        binding.oneKeyConfig.isVisible = isHooks
+        binding.homeHiddenTitle.setText(
+            if (isHidden) R.string.home_hidden_title else R.string.home_hidden_title_off
+        )
+        binding.homeHiddenSubtitle.text = when {
+            isHidden -> getString(R.string.home_xposed_filter_count, ServiceClient.filterCount)
+            else -> getString(R.string.home_hidden_subtitle_off)
+        }
     }
 
     private fun setStatusIcon(@DrawableRes res: Int) {
