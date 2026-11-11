@@ -309,8 +309,10 @@ object DeviceInfo {
         /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
         val jailbreak: Boolean = false,
         val permissive: Boolean = false,
-        /** 探测脚本是否成功返回数据；false 表示 root 执行通道异常，下列环境信息不可信。 */
+        /** 探测脚本是否完整返回（含 PROBE_DONE 标记）；false 表示结果可能不完整。 */
         val probeOk: Boolean = true,
+        /** 探测被截断但已拿到部分字段：UI 保留已采集信息，只提示「检测不完整」。 */
+        val probePartial: Boolean = false,
         /** 探测失败时的真实诊断信息（su stderr / 超时说明），用于如实告知用户。 */
         val probeError: String = "",
     )
@@ -336,7 +338,9 @@ object DeviceInfo {
         }
 
         val map = HashMap<String, String>()
-        val probeResult = if (!script.isNullOrEmpty()) execRootDetail(script, 12) else null
+        // 修订 16：文件式执行 + 完整性标记，慢探测后置并单独限时，超时提到 20s。
+        val probeResult = if (!script.isNullOrEmpty())
+            execRootDetail(script, 20, marker = "PROBE_DONE=1") else null
         probeResult?.out?.lineSequence()?.forEach { line ->
             val idx = line.indexOf('=')
             if (idx > 0) {
@@ -346,12 +350,23 @@ object DeviceInfo {
                 }
             }
         }
-        // 探测是否真正成功：必须能解析出 SU 这类基准字段。失败时后续「工作模式 / 越狱」
-        // 判定都不可信，UI 需如实显示诊断而不是伪装成「工作中 / 已 Root」。
-        val probeOk = map.containsKey("SU") || map.containsKey("KERNEL")
-        val probeError = if (probeOk) "" else buildString {
-            append(if (probeResult == null) "无法读取内置探测脚本" else "root 探测脚本未返回有效数据")
-            probeResult?.err?.takeIf { it.isNotBlank() }?.let { append("：").append(it.trim().take(220)) }
+        // 探测是否真正完整：必须能解析出 SU 基准字段，且脚本末尾 PROBE_DONE=1 到达。
+        // 缺标记说明脚本被截断（旧版 stdin 吞脚本 / 命令超时），此时关键字段可能已齐但
+        // 后半段缺失，必须如实显示诊断，绝不把半截结果伪装成「工作中 / 已 Root」。
+        val hasBase = map.containsKey("SU") || map.containsKey("KERNEL")
+        val complete = map["PROBE_DONE"] == "1"
+        val probeOk = hasBase && complete
+        val probeError = when {
+            probeOk -> ""
+            probeResult == null -> "无法读取内置探测脚本"
+            !hasBase -> buildString {
+                append("root 探测脚本未返回有效数据")
+                probeResult.err.takeIf { it.isNotBlank() }?.let { append("：").append(it.trim().take(220)) }
+            }
+            else -> buildString {
+                append("探测脚本未执行完（缺少结束标记，多为 root shell 兼容性或命令超时），部分字段可能缺失")
+                probeResult.err.takeIf { it.isNotBlank() }?.let { append("：").append(it.trim().take(220)) }
+            }
         }
 
         fun v(key: String, fallback: String = "未知"): String =
@@ -433,6 +448,7 @@ object DeviceInfo {
             jailbreak = jailbreak,
             permissive = permissive,
             probeOk = probeOk,
+            probePartial = hasBase && !complete,
             probeError = probeError,
         )
         lastEnv = env
@@ -457,37 +473,54 @@ object DeviceInfo {
     /**
      * 以 root 权限执行 shell 脚本，分离捕获 stdout / stderr。
      *
-     * 修订 14 · 根因修复：旧实现「由 App 进程把脚本写到 /data/local/tmp/，再 su -c \"sh <路径>\"」
-     * 在标准 Android 上行不通——/data/local/tmp 属 shell:shell、权限 0771，普通 App 无写权限，
-     * writeText 抛异常被吞掉后返回 finished=false。于是探测 map 全空（工作模式未知、超级用户/模块
-     * 显示 —）、下发 out=null（误报「执行失败，请确认已授予 Root 权限」），而 hasRoot() 走
-     * `su -c 'id -u'` 不写文件却成功，造成「已 Root 却说没权限」的自相矛盾。
+     * 修订 16 · 根因修复：上一版把脚本经 stdin 喂给 root 的 `sh`（`su -c sh`）。`sh` 从
+     * **不可 seek 的管道**读取脚本时，脚本内部的命令替换（`$("$KSUD" -V)`、`$(pm path ...)`、
+     * `$(ksud susfs ...)` 等）会继承同一个 stdin，Android 的 mksh 会把后续脚本行一并消费，
+     * 导致脚本只执行前半段就正常退出（finished=true、exit=0），stdout 只有开头几行。
+     * 表现为「工作中 · ksud 3.3.3 · KernelSU」却「工作模式未知 / 模块 — / ko 不显示」。
      *
-     * 新通道完全不落盘、不依赖 base64，与已验证可用的 hasRoot() 同样经 `sh -c` 调 su，
-     * 脚本正文通过 stdin 喂给 root 的非交互 sh（零转义、引号与 $ 全部原样），写完 close
-     * 触发 EOF，脚本末尾补显式 exit 0，规避交互式 su 不随 EOF 退出导致的超时强杀。
-     * 两级回退：`su -c sh`（标准）→ `su`（兼容不支持 -c 的变体）。
-     * 仅当某一级超时/启动失败才尝试下一级；某级 finished=true 即立即返回，
-     * 避免重复执行写配置的脚本。两级皆失败时返回带真实 stderr 的诊断信息。
+     * 新通道：由 **root 侧的 cat** 把脚本从 stdin 落到 /data/local/tmp 临时文件，再 `sh <文件>`
+     * 执行——`sh` 从**可 seek 的普通文件**读取脚本，命令替换无法再吞掉后续行；写文件的是
+     * root 进程，不依赖 App 对 /data/local/tmp 的写权限（绕开修订 10 的坑）。执行完立即删除
+     * 临时文件并保留原始退出码。
+     * 三级回退：文件式 → `su -c sh` → `su`，任一级拿到「完整」结果即返回，避免重复执行
+     * 写配置脚本。传 marker 时只有 stdout 含该标记才算完整（探测脚本用 PROBE_DONE=1）。
      * 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
      */
-    fun execRootDetail(script: String, timeoutSeconds: Long = 12): RootExecResult {
+    fun execRootDetail(script: String, timeoutSeconds: Long = 15, marker: String? = null): RootExecResult {
         val body = script.trimEnd() + "\nexit 0\n"
+        val tmp = "/data/local/tmp/apkesu_${System.nanoTime()}.sh"
+        // 单引号内 $? / $R 由 su 启动的 shell 展开，外层 sh -c 不会提前展开。
+        val fileCmd = "su -c 'cat > $tmp && sh $tmp; R=\$?; rm -f $tmp; exit \$R'"
         val attempts = mutableListOf<Pair<String, RootExecResult>>()
 
-        for (cmd in listOf("su -c sh", "su")) {
+        for (cmd in listOf(fileCmd, "su -c sh", "su")) {
             val r = execSu(cmd, body, timeoutSeconds)
-            if (r.finished) return r   // 执行完成即返回；即使 stdout 为空也以真实 stderr 上报
+            val complete = if (marker != null) {
+                // 探测脚本：必须拿到结束标记才算完整，否则换下一级重采
+                r.finished && r.out.contains(marker)
+            } else {
+                // 带副作用的脚本（写配置 / insmod）：任一通道执行完成即返回，
+                // 绝不重复执行。仅「文件式 cat 落盘失败」会 finished=true 且 out 空，
+                // 这一级需排除，让后续通道有机会真正跑起来。
+                r.finished && (cmd != fileCmd || r.out.isNotBlank())
+            }
+            if (complete) return r
             attempts += cmd to r
         }
 
+        // 全部未达标：保留输出最完整的一次（至少让用户看到已探测到的字段），并附诊断。
+        val best = attempts.maxByOrNull { it.second.out.length }?.second
+            ?: RootExecResult(false, "", "su 启动失败", -1)
         val diag = attempts.joinToString(" | ") { (cmd, r) ->
-            "[$cmd]${if (r.finished) "exit=${r.exit}" else "超时/未完成"}" +
-                (r.err.takeIf { it.isNotBlank() }?.let { ", err=${it.trim().take(160)}" } ?: "")
+            val tag = if (cmd == fileCmd) "文件式" else cmd
+            "[$tag]${if (r.finished) "exit=${r.exit}" else "超时"}/out=${r.out.length}B" +
+                (r.err.takeIf { it.isNotBlank() }?.let { ", err=${it.trim().take(120)}" } ?: "")
         }
         return RootExecResult(
-            false, "",
-            "su 未能在 ${timeoutSeconds}s 内返回（多为 Root 管理器未授予本应用权限或授权弹窗被拒）。诊断：$diag",
+            false,
+            best.out,
+            (best.err.takeIf { it.isNotBlank() } ?: "脚本未完整执行（缺少结束标记）") + "  ｜ 诊断：$diag",
             -1,
         )
     }
