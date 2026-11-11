@@ -123,7 +123,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ================= 越狱模式分区安全警示（仅越狱/permissive 时显示） ================= -->
+            <!-- ================= 越狱模式：SUSFS 路径隐藏不可用（仅越狱时显示） ================= -->
             <LinearLayout
                 android:id="@+id/jb_warning_card"
                 android:layout_width="match_parent"
@@ -136,18 +136,20 @@
                 android:visibility="gone">
 
                 <TextView
+                    android:id="@+id/jb_warning_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/susfs_jb_warning_title"
+                    android:text="@string/susfs_jb_feature_hidden_title"
                     android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                     android:textColor="?attr/colorError"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/jb_warning_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/susfs_jb_warning"
+                    android:text="@string/susfs_jb_feature_hidden"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorError" />
 
@@ -273,6 +275,7 @@
 
             <!-- ================= 隐藏开关 ================= -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_switches"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -371,6 +374,7 @@
 
             <!-- ================= SUSFS 内核模块（LKM）加载 ================= -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_module"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
@@ -443,6 +447,7 @@
 
             <!-- ================= 路径隐藏 ================= -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_paths"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
