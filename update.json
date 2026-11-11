@@ -2,5 +2,5 @@
   "version": "v1.2.4",
   "versionCode": 10204,
   "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.4/ApkeSU-v1.2.4-release.zip",
-  "changelog": "隐藏应用列表-OSS v1.2.4：更名「隐藏应用列表-OSS」；首页新增机型/应用数/模块数/环境检测/Root框架面板与头像隐藏状态；一键配置移至功能页；新增 SUSFS 路径隐藏功能页（加载并启用/越狱模式/应用隐藏+内核伪装/SUSFS日志/对非Root挂载隐藏/自定义隐藏路径）"
+  "changelog": "隐藏应用列表-OSS v1.2.4：更名「隐藏应用列表-OSS」；首页新增机型/应用数/模块数/环境检测/真实Root框架面板与头像状态卡；一键配置移至功能页；功能页新增 SUSFS 路径隐藏——SukiSU 式状态卡显示 LKM/GKI/自定义/越狱模式工作模式标签，真实识别 KernelSU/KernelSU Next/SukiSU Ultra/SterSU/APatch/Magisk，展示内核版本/钩子类型/Zygisk实现/SELinux/指纹等详情，含加载并启用、应用隐藏+内核伪装、SUSFS日志、对非Root挂载隐藏开关与自定义隐藏路径，兼容越狱模式临时 root"
 }
