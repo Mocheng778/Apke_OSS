@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dev.androidbroadcast.vbpd.viewBinding
 import icu.nullptr.hidemyapplist.ui.util.setEdge2EdgeFlags
@@ -37,6 +38,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         private const val KEY_HIDE_MNT_NONROOT = "sw_hide_mnt_nonroot"
         private const val KEY_PRESET_PATHS = "preset_paths"
         private const val KEY_CUSTOM_PATHS = "custom_paths"
+        private const val KEY_SELECTED_KO = "selected_ko"
 
         val PRESET_PATHS = listOf(
             "/data/adb/ksu",
@@ -70,6 +72,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
     private val prefs get() = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    /** 最近一次探测结果，供「手动选择 .ko」对话框读取内置文件列表。 */
+    private var lastEnv: DeviceInfo.RootEnv? = null
+
+    /** 用户手动指定的 .ko 文件名；空=自动按内核 KMI 匹配。 */
+    private fun selectedKo(): String = prefs.getString(KEY_SELECTED_KO, "") ?: ""
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         with(binding.toolbar) {
             setupToolbar(toolbar = this, title = getString(R.string.title_susfs))
@@ -96,8 +104,64 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             applyAll()
         }
         binding.loadModuleBtn.setOnClickListener { loadModule() }
+        binding.koStatus.setOnClickListener { showKoPicker() }
 
         loadDetection(refresh = false)
+    }
+
+    /**
+     * 手动选择发行版内置的 .ko（呼应最初「用 susfs4ksu 自带的」方案）。
+     * 首项「自动按内核 KMI 匹配」为推荐；其余为内置目录里的各 KMI 文件。
+     * 自动匹配不到、或自动加载被内核拒绝时，用户可在这里手动指定对应 KMI 的 ko。
+     */
+    private fun showKoPicker() {
+        val env = lastEnv
+        val files = env?.susfsKoList
+            ?.split(',')
+            ?.map { it.trim() }
+            ?.filter { it.endsWith(".ko") && !it.contains('/') }
+            ?.distinct()
+            .orEmpty()
+        if (files.isEmpty()) {
+            snack(R.string.susfs_ko_picker_empty)
+            return
+        }
+        val autoLabel = getString(R.string.susfs_ko_picker_auto)
+        val labels = listOf(autoLabel) + files
+        val current = selectedKo()
+        val checked = if (current.isEmpty()) 0 else (files.indexOf(current) + 1).coerceAtLeast(0)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.susfs_ko_picker_title)
+            .setSingleChoiceItems(labels.toTypedArray(), checked) { dialog, which ->
+                val chosen = if (which == 0) "" else files[which - 1]
+                prefs.edit().putString(KEY_SELECTED_KO, chosen).apply()
+                dialog.dismiss()
+                renderKoStatus(lastEnv)
+                if (chosen.isEmpty()) snack(R.string.susfs_ko_picker_set_auto)
+                else snack(getString(R.string.susfs_ko_picker_set_file, chosen))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** 模块卡片「模块文件」状态行：显示发行版内置 .ko 数量、当前内核 KMI 匹配情况、手动选择。 */
+    private fun renderKoStatus(env: DeviceInfo.RootEnv?) {
+        if (env == null) {
+            binding.koStatus.setText(R.string.susfs_module_status_none)
+            return
+        }
+        val chosen = selectedKo()
+        binding.koStatus.text = when {
+            env.susfsKoCount > 0 && chosen.isNotEmpty() ->
+                getString(R.string.susfs_ko_status_manual, env.susfsKoCount, chosen, env.susfsKoKmi.ifEmpty { "—" })
+            env.susfsKoCount > 0 && env.susfsKoMatch.isNotEmpty() ->
+                getString(R.string.susfs_ko_status_matched, env.susfsKoCount, env.susfsKoKmi)
+            env.susfsKoCount > 0 ->
+                getString(R.string.susfs_ko_status_nomatch, env.susfsKoCount, env.susfsKoKmi.ifEmpty { "—" })
+            env.susfsKo.isNotEmpty() ->
+                getString(R.string.susfs_module_status_found, env.susfsKo)
+            else -> getString(R.string.susfs_module_status_none)
+        }
     }
 
     // ---------------------------------------------------------------- 状态与环境检测
@@ -122,6 +186,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
     }
 
     private fun renderStatus(env: DeviceInfo.RootEnv) {
+        lastEnv = env
         // 探测脚本没跑通时，环境信息全部不可信：宁可如实显示「检测失败 + 诊断」，
         // 也不要像旧版那样伪装成「工作中 / 已 Root」却把工作模式、超级用户、模块全填 —。
         if (!env.probeOk) {
@@ -131,7 +196,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             binding.jbWarningText.text = getString(R.string.susfs_probe_failed, env.probeError)
             binding.jbWarningCard.visibility = View.VISIBLE
             renderModeChip(env.workMode)
-            binding.koStatus.setText(R.string.susfs_module_status_none)
+            renderKoStatus(env)
             renderEnvInfo(env)
             return
         }
@@ -180,9 +245,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         }
 
         renderModeChip(env.workMode)
-        binding.koStatus.text = if (env.susfsKo.isNotEmpty())
-            getString(R.string.susfs_module_status_found, env.susfsKo)
-        else getString(R.string.susfs_module_status_none)
+        renderKoStatus(env)
         renderEnvInfo(env)
     }
 
@@ -391,29 +454,36 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         val hideMnt: Boolean,
     )
 
-    /** 加载 SUSFS 独立内核模块（LKM）：动态 insmod，不刷分区。仅在解锁模式（非越狱）下可触发。 */
+    /** 加载 SUSFS 独立内核模块（LKM）：用发行版内置 .ko 动态 insmod，不刷分区。仅解锁模式可触发。 */
     private fun loadModule() {
+        val preferred = selectedKo()
         binding.loadModuleBtn.isEnabled = false
         thread {
             val hasRoot = DeviceInfo.hasRoot()
-            val r = if (hasRoot) DeviceInfo.loadSusfsModule() else null
+            val r = if (hasRoot) DeviceInfo.loadSusfsModule(preferred) else null
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {
                     binding.loadModuleBtn.isEnabled = true
+                    fun methodLabel(m: String) = when (m) {
+                        "ksud-insmod" -> getString(R.string.susfs_method_ksud_insmod)
+                        "susfs_insmod" -> getString(R.string.susfs_method_susfs_insmod)
+                        else -> getString(R.string.susfs_method_insmod)
+                    }
                     when {
                         r == null -> snack(R.string.susfs_apply_noroot)
-                        r.state == "no_ko" -> snack(R.string.susfs_module_no_ko)
+                        r.state == "no_ko" ->
+                            if (r.available.isNotEmpty())
+                                snack(getString(R.string.susfs_module_no_ko_choose, r.kmi.ifEmpty { "—" }))
+                            else snack(R.string.susfs_module_no_ko)
                         r.state == "loaded" -> snack(
-                            getString(R.string.susfs_module_loaded,
-                                "${r.path} · ${if (r.method == "ksud") getString(R.string.susfs_method_ksud) else getString(R.string.susfs_method_insmod)}")
+                            getString(R.string.susfs_module_loaded, "${r.path} · ${methodLabel(r.method)}")
                         )
                         r.state == "already" -> snack(
-                            getString(R.string.susfs_module_already,
-                                "${r.path} · ${if (r.method == "ksud") getString(R.string.susfs_method_ksud) else getString(R.string.susfs_method_insmod)}")
+                            getString(R.string.susfs_module_already, r.path)
                         )
                         r.state == "failed" -> snack(
                             getString(R.string.susfs_module_failed,
-                                if (r.error.isNotEmpty()) r.error else "insmod 被内核拒绝（vermagic/KMI 不匹配）")
+                                if (r.error.isNotEmpty()) r.error else getString(R.string.susfs_module_failed_kmi))
                         )
                         else -> snack(R.string.susfs_apply_failed)
                     }
@@ -545,22 +615,32 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             lines += "chmod 644 $dir/config.sh $dir/sus_path.txt 2>/dev/null || true"
         }
 
-        // 先尝试加载 SUSFS 独立内核模块（LKM）：仅当存在且尚未加载时 insmod，
+        // 先加载 SUSFS 独立内核模块（LKM）：优先用发行版内置、按内核 KMI 精确匹配的 .ko，
         // 不刷分区、不动 GKI SUSFS 配置与 KernelSU KO（仅解锁模式可触发）。
-        lines += "KO=\"\""
-        lines += "for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do"
-        lines += "  KO=\$(find \"\$D\" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)"
-        lines += "  [ -n \"\$KO\" ] && break"
+        // 内置 .ko 位于模块 ZIP 的 susfs_ko/，刷入后为 /data/adb/modules/apkesu_zygisk/susfs_ko/。
+        lines += "KODIR=\"\""
+        lines += "for D in /data/adb/modules/apkesu_zygisk/susfs_ko /data/adb/modules_update/apkesu_zygisk/susfs_ko /data/adb/ksu/susfs_ko /data/adb/susfs_ko; do"
+        lines += "  [ -d \"\$D\" ] && KODIR=\"\$D\" && break"
         lines += "done"
-        lines += "[ -z \"\$KO\" ] && KO=\$(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)"
+        lines += "[ -z \"\$KODIR\" ] && KODIR=\$(find /data/adb -maxdepth 5 -type d -name susfs_ko 2>/dev/null | head -n1)"
+        lines += "KREL=\$(cat /proc/sys/kernel/osrelease 2>/dev/null)"
+        lines += "[ -z \"\$KREL\" ] && KREL=\$(uname -r 2>/dev/null)"
+        lines += "KAND=\$(echo \"\$KREL\" | grep -oE 'android[0-9]+' | head -n1)"
+        lines += "KVER=\$(echo \"\$KREL\" | grep -oE '^[0-9]+\\.[0-9]+' | head -n1)"
+        lines += "KMI=\"\""
+        lines += "[ -n \"\$KAND\" ] && [ -n \"\$KVER\" ] && KMI=\"\${KAND}-\${KVER}\""
+        lines += "KO=\"\""
+        lines += "[ -n \"\$KMI\" ] && [ -n \"\$KODIR\" ] && [ -f \"\$KODIR/susfs_guard_lkm-\${KMI}.ko\" ] && KO=\"\$KODIR/susfs_guard_lkm-\${KMI}.ko\""
+        lines += "[ -z \"\$KO\" ] && [ -n \"\$KODIR\" ] && KO=\$(ls -1 \"\$KODIR\"/*.ko 2>/dev/null | head -n1)"
+        lines += "[ -z \"\$KO\" ] && for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do KO=\$(find \"\$D\" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1); [ -n \"\$KO\" ] && break; done"
         lines += "if [ -n \"\$KO\" ]; then"
-        lines += "  KN=\$(basename \"\$KO\" .ko)"
-        lines += "  if ! grep -q \"\$KN\" /proc/modules 2>/dev/null; then"
-        lines += "    insmod \"\$KO\" 2>/dev/null && echo KO_LOADED=1 || echo KO_LOADED=0"
+        lines += "  if ! grep -q 'susfs_guard_lkm' /proc/modules 2>/dev/null; then"
+        lines += "    insmod \"\$KO\" expose_proc=1 2>/dev/null && echo KO_LOADED=1 || echo KO_LOADED=0"
         lines += "  else"
         lines += "    echo KO_LOADED=1"
         lines += "  fi"
         lines += "  echo KO_PATH=\"\$KO\""
+        lines += "  echo KO_KMI=\"\$KMI\""
         lines += "else"
         lines += "  echo KO_LOADED=NA"
         lines += "fi"
