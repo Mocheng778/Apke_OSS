@@ -123,6 +123,37 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ================= 运行状态：SUSFS 正在工作中 + 已隐藏路径数 ================= -->
+            <LinearLayout
+                android:id="@+id/work_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/susfs_safe_bg"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/work_banner_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/susfs_work_title"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textColor="#2E7D32"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/work_banner_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                    android:textColor="#388E3C"
+                    tools:text="已隐藏 13 条路径" />
+
+            </LinearLayout>
+
             <!-- ================= 越狱模式：SUSFS 路径隐藏不可用（仅越狱时显示） ================= -->
             <LinearLayout
                 android:id="@+id/jb_warning_card"
