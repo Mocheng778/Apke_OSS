@@ -1,19 +1,22 @@
 package org.apkesu.app.zygote.hook
 
+import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.Build
 import androidx.annotation.RequiresApi
-import icu.nullptr.hidemyapplist.common.CollectionUtils.firstOrNullWithType
 import icu.nullptr.hidemyapplist.common.OSUtils
 import icu.nullptr.hidemyapplist.common.Utils
+import org.apkesu.app.zygote.util.CollectionUtils.firstOrNullWithType
+import org.apkesu.app.zygote.util.CollectionUtils.firstWithType
 import org.apkesu.app.zygote.util.Logcat.logI
-import org.apkesu.app.zygote.util.ServiceUtils.getCallingApps
 import org.apkesu.app.zygote.util.ServiceUtils.getPackageNameFromPackageSettings
-import org.apkesu.app.zygote.util.ZLUtils.args
+import org.apkesu.app.zygote.util.ServiceUtils.getPackagesForUidLocal
+import org.apkesu.app.zygote.util.ZLUtils.dumpArgs
 import org.apkesu.app.zygote.util.ZLUtils.findMethod
 import org.apkesu.app.zygote.util.ZLUtils.getArgument
 import org.apkesu.app.zygote.util.ZygoteConstants.APPS_FILTER_IMPL_CLASS
 import org.apkesu.app.zygote.util.ZygoteConstants.COMPUTER_ENGINE_CLASS
+import org.apkesu.app.zygote.util.ZygoteConstants.PERMISSION_MANAGER_SERVICE_CLASS
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 open class PmsHookTarget33 : PmsHookTargetBase() {
@@ -45,7 +48,7 @@ open class PmsHookTarget33 : PmsHookTargetBase() {
                         returnValue,
                         { Binder.getCallingUid() },
                         { getPackageNameFromPackageSettings(frame.getArgument(1)) },
-                        ::getCallingApps,
+                        ::getPackagesForUidLocal,
                         null,
                     )
                 }
@@ -59,7 +62,7 @@ open class PmsHookTarget33 : PmsHookTargetBase() {
                         returnValue,
                         { Binder.getCallingUid() },
                         { getPackageNameFromPackageSettings(frame.getArgument(2)) },
-                        ::getCallingApps,
+                        ::getPackagesForUidLocal,
                         null,
                     )
                 }
@@ -69,12 +72,14 @@ open class PmsHookTarget33 : PmsHookTargetBase() {
                 COMPUTER_ENGINE_CLASS,
                 "getPackageInfoInternal",
             ) { methodName, frame, returnValue ->
+                val args = frame.dumpArgs()
+
                 applyPackageHiding(
                     methodName,
                     returnValue,
-                    { frame.args.firstOrNullWithType() },
-                    { frame.args.firstOrNullWithType() },
-                    ::getCallingApps,
+                    { args.firstOrNullWithType() },
+                    { args.firstOrNullWithType() },
+                    ::getPackagesForUidLocal,
                     null,
                 )
             }
@@ -83,12 +88,14 @@ open class PmsHookTarget33 : PmsHookTargetBase() {
                 COMPUTER_ENGINE_CLASS,
                 "getApplicationInfoInternal",
             ) { methodName, frame, returnValue ->
+                val args = frame.dumpArgs()
+
                 applyPackageHiding(
                     methodName,
                     returnValue,
-                    { frame.args.firstOrNullWithType() },
-                    { frame.args.firstOrNullWithType() },
-                    ::getCallingApps,
+                    { args.firstOrNullWithType() },
+                    { args.firstOrNullWithType() },
+                    ::getPackagesForUidLocal,
                     null,
                 )
             }
@@ -108,6 +115,22 @@ open class PmsHookTarget33 : PmsHookTargetBase() {
                         }
                     },
                     true,
+                )
+            }
+
+            hookBefore(
+                listOf(COMPUTER_ENGINE_CLASS, PERMISSION_MANAGER_SERVICE_CLASS),
+                listOf("checkUidPermission"),
+            ) { methodName, frame, returnValue ->
+                val uid = frame.dumpArgs().firstWithType<Int>()
+
+                applyPackageHiding(
+                    methodName,
+                    returnValue,
+                    { Binder.getCallingUid() },
+                    { getPackagesForUidLocal(pms, uid).firstOrNull() },
+                    ::getPackagesForUidLocal,
+                    PackageManager.PERMISSION_DENIED
                 )
             }
         }

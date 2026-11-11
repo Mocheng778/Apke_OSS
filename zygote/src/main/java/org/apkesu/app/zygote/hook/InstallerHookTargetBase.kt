@@ -8,7 +8,7 @@ import icu.nullptr.hidemyapplist.common.Utils.getPackageInfoCompat
 import icu.nullptr.hidemyapplist.common.Utils.getUserFromCallingUid
 import org.apkesu.app.zygote.util.Logcat.logD
 import org.apkesu.app.zygote.util.Logcat.logI
-import org.apkesu.app.zygote.util.ServiceUtils.getCallingApps
+import org.apkesu.app.zygote.util.ServiceUtils.getPackagesForUidLocal
 import org.apkesu.app.zygote.util.ZLUtils.getArgument
 
 abstract class InstallerHookTargetBase : IFrameworkHook {
@@ -62,7 +62,7 @@ abstract class InstallerHookTargetBase : IFrameworkHook {
     ) {
         if (callingUid == Constants.UID_SYSTEM) return
 
-        val callingApps = getCallingApps(pms, callingUid)
+        val callingApps = getPackagesForUidLocal(pms, callingUid)
         val callingUser = getUserFromCallingUid(callingUid)
 
         val query = findTargetApp() ?: return

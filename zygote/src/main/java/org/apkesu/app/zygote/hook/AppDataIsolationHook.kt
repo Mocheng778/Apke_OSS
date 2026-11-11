@@ -11,8 +11,8 @@ import org.apkesu.app.zygote.service.SystemServerHook
 import org.apkesu.app.zygote.util.Logcat.logD
 import org.apkesu.app.zygote.util.Logcat.logE
 import org.apkesu.app.zygote.util.Logcat.logI
-import org.apkesu.app.zygote.util.ServiceUtils.getCallingApps
-import org.apkesu.app.zygote.util.ZLUtils.args
+import org.apkesu.app.zygote.util.ServiceUtils.getPackagesForUidLocal
+import org.apkesu.app.zygote.util.ZLUtils.firstArgWithSimpleName
 import org.apkesu.app.zygote.util.ZLUtils.getArgument
 import org.apkesu.app.zygote.util.ZLUtils.getBooleanField
 import org.apkesu.app.zygote.util.ZLUtils.getIntField
@@ -66,15 +66,17 @@ class AppDataIsolationHook : IFrameworkHook {
                 }.getOrNull()
 
                 if (config.altAppDataIsolation) {
+                    val thisObject = frame.thisObject
+
                     val isEnabled = getBooleanField(
-                        frame.thisObject,
+                        thisObject,
                         APPDATA_ISOLATION_ENABLED,
                         processListClazz,
                     )
 
                     if (!isEnabled) {
                         setBooleanField(
-                            frame.thisObject,
+                            thisObject,
                             APPDATA_ISOLATION_ENABLED,
                             true,
                             processListClazz,
@@ -91,15 +93,17 @@ class AppDataIsolationHook : IFrameworkHook {
                         voldHookSkipped = true
                         logE(TAG) { "ProcessList - FUSE storage is not enabled, skip vold hook" }
                     } else {
+                        val thisObject = frame.thisObject
+
                         val isolationEnabled = getBooleanField(
-                            frame.thisObject,
+                            thisObject,
                             VOLD_APPDATA_ISOLATION_ENABLED,
                             processListClazz,
                         )
 
                         if (!isolationEnabled) {
                             setBooleanField(
-                                frame.thisObject,
+                                thisObject,
                                 VOLD_APPDATA_ISOLATION_ENABLED,
                                 true,
                                 processListClazz,
@@ -184,14 +188,14 @@ class AppDataIsolationHook : IFrameworkHook {
                     "needsStorageDataIsolation",
                 ) { _, frame, returnValue ->
                     if (config.altVoldAppDataIsolation) {
-                        val app = frame.args.find { it?.javaClass?.simpleName == "ProcessRecord" }!!
+                        val app = frame.firstArgWithSimpleName("ProcessRecord")!!
                         val uid = runCatching {
                             getIntField(app, "uid")
                         }.getOrElse {
                             getIntField(app, "uid", processRecordIntClass)
                         }
 
-                        val apps = getCallingApps(pms, uid)
+                        val apps = getPackagesForUidLocal(pms, uid)
 
                         if (config.detailLog) {
                             val processName = runCatching {

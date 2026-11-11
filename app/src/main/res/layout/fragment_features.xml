@@ -8,10 +8,10 @@
     tools:context=".ui.fragment.FeatureFragment">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:background="@android:color/transparent"
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -49,26 +49,28 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardCornerRadius="28dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#33FF9FC0"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="26dp">
+                        android:padding="22dp">
 
                         <FrameLayout
-                            android:layout_width="58dp"
-                            android:layout_height="58dp"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
                             android:background="@drawable/feature_icon_circle">
 
                             <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/outline_android_24"
                                 app:tint="@android:color/white" />
@@ -78,10 +80,20 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
                             android:text="@string/title_app_manage"
                             android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="@string/feature_app_manage_desc"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
 
@@ -95,26 +107,28 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardCornerRadius="28dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#336FC9BE"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="26dp">
+                        android:padding="22dp">
 
                         <FrameLayout
-                            android:layout_width="58dp"
-                            android:layout_height="58dp"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
                             android:background="@drawable/feature_icon_teal">
 
                             <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_outline_layers_24"
                                 app:tint="@android:color/white" />
@@ -124,10 +138,20 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
                             android:text="@string/title_template_manage"
                             android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="@string/feature_template_manage_desc"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
 
@@ -151,26 +175,28 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardCornerRadius="28dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#33A8C653"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="26dp">
+                        android:padding="22dp">
 
                         <FrameLayout
-                            android:layout_width="58dp"
-                            android:layout_height="58dp"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
                             android:background="@drawable/feature_icon_lime">
 
                             <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/baseline_my_location_24"
                                 app:tint="@android:color/white" />
@@ -180,10 +206,20 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
                             android:text="@string/title_preset_manage"
                             android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="@string/feature_preset_manage_desc"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
 
@@ -197,26 +233,28 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardCornerRadius="28dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                    app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#336FC9BE"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:paddingVertical="26dp">
+                        android:padding="22dp">
 
                         <FrameLayout
-                            android:layout_width="58dp"
-                            android:layout_height="58dp"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
                             android:background="@drawable/feature_icon_teal">
 
                             <ImageView
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 android:layout_gravity="center"
                                 android:src="@drawable/outline_storage_24"
                                 app:tint="@android:color/white" />
@@ -226,10 +264,20 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="12dp"
+                            android:gravity="center"
                             android:text="@string/title_bulk_config_wizard"
                             android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
                             android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="@string/feature_bulk_config_desc"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
 
@@ -245,40 +293,56 @@
                 android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardCornerRadius="28dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
                 app:rippleColor="?attr/colorPrimary"
-                app:strokeWidth="0dp">
+                app:strokeColor="#33FF9FC0"
+                app:strokeWidth="1.5dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="24dp"
-                    android:paddingVertical="20dp">
+                    android:padding="20dp">
 
                     <FrameLayout
-                        android:layout_width="58dp"
-                        android:layout_height="58dp"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
                         android:background="@drawable/feature_icon_circle">
 
                         <ImageView
-                            android:layout_width="30dp"
-                            android:layout_height="30dp"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:layout_gravity="center"
                             android:src="@drawable/outline_assignment_24"
                             app:tint="@android:color/white" />
 
                     </FrameLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="18dp"
-                        android:text="@string/title_logs"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                        android:textStyle="bold" />
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/title_logs"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/feature_logs_desc"
+                            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                            android:textColor="?android:attr/textColorSecondary" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 

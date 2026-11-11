@@ -4,6 +4,11 @@
 
     <string name="title_home">Home</string>
     <string name="title_features">Features</string>
+    <string name="feature_app_manage_desc">Manage hide scope</string>
+    <string name="feature_template_manage_desc">Create &amp; edit templates</string>
+    <string name="feature_preset_manage_desc">Browse app presets</string>
+    <string name="feature_bulk_config_desc">Quick bulk config</string>
+    <string name="feature_logs_desc">View hide logs</string>
     <string name="title_mine">Mine</string>
     <string name="title_logs">Logs</string>
     <string name="title_settings">Settings</string>

@@ -6,6 +6,11 @@
     <string name="one_key_config_failed">配置失败，请检查模块是否已激活</string>
     <string name="title_home">主页</string>
     <string name="title_features">功能</string>
+    <string name="feature_app_manage_desc">管理隐藏作用域</string>
+    <string name="feature_template_manage_desc">创建与编辑模板</string>
+    <string name="feature_preset_manage_desc">浏览内置应用预设</string>
+    <string name="feature_bulk_config_desc">快速批量配置</string>
+    <string name="feature_logs_desc">查看隐藏拦截日志</string>
     <string name="title_mine">我的</string>
     <string name="title_logs">日志</string>
     <string name="title_settings">设置</string>

@@ -69,7 +69,7 @@ object Logcat {
 
         // add into logcat if available
         if (logdReady) {
-            Log.i("ApkeSU", parsedMsg)
+            Log.i("HMA-OSS", parsedMsg)
         }
     }
 }

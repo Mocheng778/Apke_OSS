@@ -44,10 +44,12 @@
                 android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
                 app:rippleColor="?attr/colorPrimary"
-                app:strokeWidth="0dp">
+                app:strokeColor="#33FF9FC0"
+                app:strokeWidth="1.5dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -115,10 +117,12 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#336FC9BE"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -161,10 +165,12 @@
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="0dp"
                     app:rippleColor="?attr/colorPrimary"
-                    app:strokeWidth="0dp">
+                    app:strokeColor="#33A8C653"
+                    app:strokeWidth="1.5dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"

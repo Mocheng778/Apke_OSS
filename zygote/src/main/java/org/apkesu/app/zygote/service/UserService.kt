@@ -7,13 +7,13 @@ import android.os.Bundle
 import icu.nullptr.hidemyapplist.common.Constants
 import icu.nullptr.hidemyapplist.common.Utils.getUserFromCallingUid
 import org.apkesu.app.common.BuildConfig
+import org.apkesu.app.zygote.util.ActivityManagerUtils
 import org.apkesu.app.zygote.util.Logcat.logD
 import org.apkesu.app.zygote.util.Logcat.logE
 import org.apkesu.app.zygote.util.Logcat.logI
 import org.apkesu.app.zygote.util.ServiceUtils.waitForService
+import org.apkesu.app.zygote.util.UidObserverAdapter
 import org.apkesu.app.zygote.util.ZLUtils.getStaticIntField
-import rikka.hidden.compat.ActivityManagerApis
-import rikka.hidden.compat.adapter.UidObserverAdapter
 
 object UserService {
 
@@ -34,7 +34,8 @@ object UserService {
 
                 logD(TAG) { "Calculated user id: $userId" }
 
-                val provider = ActivityManagerApis.getContentProviderExternal(Constants.PROVIDER_AUTHORITY, userId, null, null)
+                val provider = ActivityManagerUtils.getContentProviderExternal(
+                    Constants.PROVIDER_AUTHORITY, userId, null, null)
                 assert (provider != null) {
                     "Failed to get provider"
                 }
@@ -65,7 +66,7 @@ object UserService {
         logI(TAG) { "Initialize HMAService - Version ${BuildConfig.APP_VERSION_NAME}" }
 
         waitForService("activity")
-        ActivityManagerApis.registerUidObserver(
+        ActivityManagerUtils.registerUidObserver(
             uidObserver,
             getActMgrField("UID_OBSERVER_ACTIVE"),
             getActMgrField("PROCESS_STATE_TOP"),

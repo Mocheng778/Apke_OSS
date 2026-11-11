@@ -1,6 +1,6 @@
 {
-  "version": "v1.2.2",
-  "versionCode": 10202,
-  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.2/ApkeSU-v1.2.2-release.zip",
-  "changelog": "ApkeSU v1.2.2：Bocchi 粉手账涂鸦风 UI 重设计；恢复并增强应用隐藏能力"
+  "version": "v1.2.3",
+  "versionCode": 10203,
+  "zipUrl": "https://github.com/Mocheng778/Apke_OSS/releases/download/v1.2.3/ApkeSU-v1.2.3-release.zip",
+  "changelog": "ApkeSU v1.2.3：同步上游隐藏增强(UsageStats/uid 状态隐藏)；功能页框型美化"
 }
