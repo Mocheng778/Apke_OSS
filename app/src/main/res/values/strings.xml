@@ -324,6 +324,10 @@
     <string name="feature_one_key_desc">一键应用隐藏配置</string>
 
     <string name="susfs_status_section">状态</string>
+    <!-- 运行状态横幅：固定的正面工作状态 + 已隐藏路径数量 -->
+    <string name="susfs_work_title">SUSFS v2.3.0 正在工作中</string>
+    <string name="susfs_work_count">已隐藏 %1$d 条路径</string>
+    <string name="susfs_apply_saved_ok">路径已保存，执行成功（共 %1$d 条路径）</string>
     <string name="susfs_support_title">SUSFS 内核支持</string>
     <string name="susfs_support_yes">已启用</string>
     <string name="susfs_support_no">未检测到（当前内核未带 SUSFS 补丁）</string>
