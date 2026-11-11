@@ -349,17 +349,31 @@
     <string name="susfs_safe_banner">分区安全：配置仅写入 /data/adb/ 数据区，路径通过内核 supercall 即时下发（纯内存态），全程不改写任何分区，解锁模式（LKM / GKI）下安全可用，不会触发格机</string>
 
     <!-- SUSFS 独立内核模块（LKM）加载入口 -->
-    <string name="susfs_module_section">SUSFS 内核模块（LKM）</string>
+    <string name="susfs_module_section">SUSFS 内核模块（LKM）· 发行版内置</string>
     <string name="susfs_module_status_label">模块文件</string>
     <string name="susfs_module_status_found">%1$s</string>
-    <string name="susfs_module_status_none">未检测到（建议安装 susfs4ksu 模块或自备匹配内核的 .ko）</string>
+    <string name="susfs_module_status_none">未检测到 .ko（请刷入本模块；内置 ko 位于模块目录 susfs_ko/）</string>
     <string name="susfs_module_load">加载内核模块</string>
-    <string name="susfs_module_summary">将 SUSFS 动态注入内核（不刷分区）：KernelSU Next 走原生 ksud susfs load，其余管理器 insmod 独立 LKM；均不触碰 boot/system/vendor/vbmeta，保留现有 GKI 配置与 KernelSU KO 不变</string>
-    <string name="susfs_module_note">适用：兼容的 arm64 LKM 设备。.ko 需与当前内核版本匹配，否则内核会拒绝加载（不会强行加载）</string>
+    <string name="susfs_module_summary">发行版已内置 susfs4ksu-lkm 全套 KMI 的 .ko（8 个：android12-5.10 ~ android17-6.18）。点击上方状态行可手动指定 ko；默认按当前内核 KMI 自动挑选，用 ksud insmod / insmod 动态注入内核，不刷分区、不触碰 boot/system/vendor/vbmeta，保持现有 GKI 配置与 KernelSU KO 不变</string>
+    <string name="susfs_module_note">来源：github.com/inforcqb/susfs4ksu-lkm v2.3.0（GPL-2.0）。仅 arm64 / GKI 内核；.ko 需与当前内核 KMI 精确匹配，否则内核会拒绝加载（不会强行加载）。点状态行可切换为手动指定其它 KMI 的 ko</string>
     <string name="susfs_module_loaded">已加载 SUSFS 内核模块：%1$s，内核现已支持 SUSFS</string>
     <string name="susfs_module_already">SUSFS 内核模块已加载：%1$s</string>
-    <string name="susfs_module_no_ko">未检测到 SUSFS 内核模块（.ko）：请确认已安装 susfs4ksu 模块或自备匹配内核的 .ko 后重试</string>
+    <string name="susfs_module_no_ko">未检测到可用的 .ko：请先刷入本模块（内置 ko 位于 /data/adb/modules/apkesu_zygisk/susfs_ko/）</string>
+    <string name="susfs_module_no_ko_choose">当前内核 KMI（%1$s）无精确匹配的内置 .ko：请点上方状态行手动选择一个 KMI 最接近的 ko 后重试</string>
     <string name="susfs_module_failed">加载失败：%1$s</string>
+    <string name="susfs_module_failed_kmi">insmod 被内核拒绝（vermagic / KMI 不匹配，或内核允许模块加载），可点状态行手动换一个 ko 再试</string>
+
+    <!-- 内置 .ko 状态与手动选择 -->
+    <string name="susfs_ko_status_matched">已内置 %1$d 个 ko · 当前内核 %2$s 已精确匹配 ✓（点击可手动更换）</string>
+    <string name="susfs_ko_status_nomatch">已内置 %1$d 个 ko · 内核 %2$s 无精确匹配（点击手动选）</string>
+    <string name="susfs_ko_status_manual">已内置 %1$d 个 ko · 手动指定 %2$s（内核 %3$s，点击可改）</string>
+    <string name="susfs_ko_picker_title">选择要加载的 .ko 文件</string>
+    <string name="susfs_ko_picker_auto">自动按内核 KMI 匹配（推荐）</string>
+    <string name="susfs_ko_picker_empty">未检测到发行版内置 .ko：请先刷入本模块后重进本页</string>
+    <string name="susfs_ko_picker_set_auto">已恢复为自动按内核 KMI 匹配</string>
+    <string name="susfs_ko_picker_set_file">已指定 ko：%1$s，点「加载内核模块」生效</string>
+    <string name="susfs_method_ksud_insmod">ksud insmod（KSU 原生）</string>
+    <string name="susfs_method_susfs_insmod">susfs_insmod 加载器</string>
 
     <string name="susfs_env_section">Root 环境</string>
     <string name="susfs_stat_superuser">超级用户</string>
