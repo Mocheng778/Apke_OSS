@@ -122,6 +122,20 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
     }
 
     private fun renderStatus(env: DeviceInfo.RootEnv) {
+        // 探测脚本没跑通时，环境信息全部不可信：宁可如实显示「检测失败 + 诊断」，
+        // 也不要像旧版那样伪装成「工作中 / 已 Root」却把工作模式、超级用户、模块全填 —。
+        if (!env.probeOk) {
+            binding.susfsStatus.setText(R.string.susfs_status_probe_failed)
+            binding.susfsVersion.setText(R.string.susfs_probe_version_hint)
+            binding.jbWarningTitle.setText(R.string.susfs_probe_failed_title)
+            binding.jbWarningText.text = getString(R.string.susfs_probe_failed, env.probeError)
+            binding.jbWarningCard.visibility = View.VISIBLE
+            renderModeChip(env.workMode)
+            binding.koStatus.setText(R.string.susfs_module_status_none)
+            renderEnvInfo(env)
+            return
+        }
+
         binding.susfsStatus.setText(
             if (env.working) R.string.susfs_status_working else R.string.susfs_status_inactive
         )
@@ -210,6 +224,10 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         }
 
         val rows = buildList {
+            // 探测失败时把真实诊断放在最前面，避免用户只看到一堆「未知 / —」而不知原因
+            if (!env.probeOk && env.probeError.isNotEmpty()) {
+                add(R.string.susfs_info_probe_diag to env.probeError)
+            }
             add(R.string.susfs_info_framework to env.framework)
             add(R.string.susfs_info_manager_ver to env.frameworkVersion)
             add(R.string.susfs_info_kernel to env.kernel)
@@ -428,9 +446,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         thread {
             val hasRoot = DeviceInfo.hasRoot()
             val env = if (hasRoot) DeviceInfo.detectRoot(appContext, force = false) else null
-            val out = if (hasRoot) {
-                DeviceInfo.execRootCapture(buildScript(state, paths), 20L)
+            // 拿完整执行结果（含 stderr 诊断），用于失败时如实告知原因，
+            // 不再笼统提示「请确认已授予 Root 权限」。
+            val exec = if (hasRoot) {
+                DeviceInfo.execRootDetail(buildScript(state, paths), 20L)
             } else null
+            val out = exec?.takeIf { it.finished && it.out.isNotBlank() }?.out
 
             // 解析真实下发结果：APPLIED 为内核实际接受的路径条数
             val applied = out?.lineSequence()
@@ -455,7 +476,13 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     binding.applyBtn.isEnabled = true
                     when {
                         !hasRoot -> snack(R.string.susfs_apply_noroot)
-                        out == null -> snack(R.string.susfs_apply_failed)
+                        out == null -> snack(
+                            getString(
+                                R.string.susfs_apply_exec_failed,
+                                exec?.err?.trim()?.take(240)?.takeIf { it.isNotEmpty() }
+                                    ?: getString(R.string.susfs_apply_failed),
+                            )
+                        )
                         !haveBin -> snack(getString(R.string.susfs_apply_no_tool, total))
                         applied == 0 -> if (isMismatch) {
                             snack(getString(R.string.susfs_apply_version_mismatch, total,
