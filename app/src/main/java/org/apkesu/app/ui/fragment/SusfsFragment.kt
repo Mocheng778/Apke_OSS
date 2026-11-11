@@ -133,9 +133,37 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             if (env.working) "$version · ${env.framework}" else env.framework
         )
 
-        // 越狱模式 / permissive：改动分区会破坏验证启动链导致格机，显示红字警示
-        binding.jbWarningCard.visibility =
-            if (env.jailbreak || env.permissive) View.VISIBLE else View.GONE
+        // 越狱模式（临时 LKM root）：SUSFS 路径隐藏功能不显示。
+        // 该能力仅在「解锁模式」（正常 LKM / GKI，已刷入带 SUSFS 补丁内核）下可用——
+        // 走 SUSFS 仓库原生方案（写 config.sh / sus_path.txt + ksu_susfs add_sus_path）。
+        // 因此越狱模式下隐藏所有可写配置 UI，仅保留只读状态 / 环境信息，并显示提示。
+        val jailbreak = env.jailbreak || env.workMode == DeviceInfo.WorkMode.JAILBREAK_LKM
+        if (jailbreak) {
+            binding.cardSwitches.visibility = View.GONE
+            binding.cardModule.visibility = View.GONE
+            binding.cardPaths.visibility = View.GONE
+            binding.loadEnableBtn.visibility = View.GONE
+            binding.loadModuleBtn.visibility = View.GONE
+            binding.applyBtn.visibility = View.GONE
+            binding.jbWarningTitle.setText(R.string.susfs_jb_feature_hidden_title)
+            binding.jbWarningText.setText(R.string.susfs_jb_feature_hidden)
+            binding.jbWarningCard.visibility = View.VISIBLE
+        } else {
+            binding.cardSwitches.visibility = View.VISIBLE
+            binding.cardModule.visibility = View.VISIBLE
+            binding.cardPaths.visibility = View.VISIBLE
+            binding.loadEnableBtn.visibility = View.VISIBLE
+            binding.loadModuleBtn.visibility = View.VISIBLE
+            binding.applyBtn.visibility = View.VISIBLE
+            // permissive（非越狱）仅作分区安全提示，功能照常可用（全程不刷分区）
+            if (env.permissive) {
+                binding.jbWarningTitle.setText(R.string.susfs_jb_warning_title)
+                binding.jbWarningText.setText(R.string.susfs_jb_warning)
+                binding.jbWarningCard.visibility = View.VISIBLE
+            } else {
+                binding.jbWarningCard.visibility = View.GONE
+            }
+        }
 
         renderModeChip(env.workMode)
         binding.koStatus.text = if (env.susfsKo.isNotEmpty())
@@ -345,7 +373,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         val hideMnt: Boolean,
     )
 
-    /** 加载 SUSFS 独立内核模块（LKM）：动态 insmod，不刷分区，越狱模式同样安全。 */
+    /** 加载 SUSFS 独立内核模块（LKM）：动态 insmod，不刷分区。仅在解锁模式（非越狱）下可触发。 */
     private fun loadModule() {
         binding.loadModuleBtn.isEnabled = false
         thread {
@@ -451,11 +479,10 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
      * - 用户提供的路径只作为文件内容 / ksu_susfs 参数，绝不拼接成写入目标；
      * - 不含任何 dd / flash / 块设备操作，不触碰 boot、system、vendor、vbmeta 等分区；
      *
-     * 关键修复：路径隐藏要「即时生效」必须通过 ksu_susfs add_sus_path 走 supercall
-     * 把规则写进内核内存表（builtin 补丁内核没有 /proc/modules 模块名，也不靠 /data/adb
-     * 配置文件即时生效）。add_sus_path 是纯内存态 ioctl/supercall，不写任何分区，
-     * 不会破坏 AVB / dm-verity，因此越狱模式（临时 LKM root）下同样允许执行——
-     * 越狱模式严禁的是「刷内核 / 写分区」，与本操作无关。
+     * 路径隐藏走 SUSFS 仓库原生方案：写 config.sh / sus_path.txt 持久化，并调用
+     * ksu_susfs add_sus_path 走 supercall 把规则写进内核内存表（builtin 补丁内核没有
+     * /proc/modules 模块名，也不靠配置文件即时生效）。该能力仅在解锁模式（正常 LKM / GKI，
+     * 已刷入带 SUSFS 补丁内核）下可用；越狱模式无法现场刷内核，故在 UI 层隐藏本功能。
      */
     private fun buildScript(state: SwitchState, paths: List<String>): String {
         val lines = mutableListOf<String>()
@@ -492,7 +519,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         }
 
         // 先尝试加载 SUSFS 独立内核模块（LKM）：仅当存在且尚未加载时 insmod，
-        // 不刷分区、不动 GKI SUSFS 配置与 KernelSU KO，越狱模式下安全。
+        // 不刷分区、不动 GKI SUSFS 配置与 KernelSU KO（仅解锁模式可触发）。
         lines += "KO=\"\""
         lines += "for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do"
         lines += "  KO=\$(find \"\$D\" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)"
