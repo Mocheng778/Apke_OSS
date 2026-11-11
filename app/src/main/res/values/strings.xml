@@ -340,6 +340,19 @@
     <string name="susfs_jb_warning">当前为越狱模式 / permissive SELinux（运行时动态加载 LKM 取得的临时 Root，未刷入内核）。此状态下写入或刷写任何分区（boot、init_boot、vendor_boot、system、vendor、vbmeta、dtbo、super 等）都会破坏验证启动链，导致无法开机或格机清除数据，请勿在此模式下刷入补丁内核、AK3 内核包或任何会改写分区的模块。\n\n但本页功能在越狱模式下照常可用：路径隐藏通过 ksu_susfs add_sus_path 走内核 supercall 写入内存规则表，纯内存态、不写任何分区，不会触发格机。只要设备内核本身已带 SUSFS 补丁且装了 susfs4ksu 模块，点「加载并启用」即可即时生效。唯一被禁止的是「刷分区」——若当前内核未带 SUSFS 补丁，越狱模式下不能现场刷内核补救，需先退出越狱模式、在正常 LKM / GKI 模式下刷入带 SUSFS 补丁的内核后再回来使用。</string>
     <string name="susfs_safe_banner">分区安全：配置仅写入 /data/adb/ 数据区，路径通过内核 supercall 即时下发（纯内存态），全程不改写任何分区，LKM / GKI / LKM 越狱三种模式下均安全可用，不会触发格机</string>
 
+    <!-- SUSFS 独立内核模块（LKM）加载入口 -->
+    <string name="susfs_module_section">SUSFS 内核模块（LKM）</string>
+    <string name="susfs_module_status_label">模块文件</string>
+    <string name="susfs_module_status_found">%1$s</string>
+    <string name="susfs_module_status_none">未检测到（建议安装 susfs4ksu 模块或自备匹配内核的 .ko）</string>
+    <string name="susfs_module_load">加载内核模块</string>
+    <string name="susfs_module_summary">将 SUSFS 以独立 LKM 动态注入内核：不刷分区、不触碰 boot/system/vendor/vbmeta，保留现有 GKI SUSFS 配置与 KernelSU KO 不变</string>
+    <string name="susfs_module_note">适用：兼容的 arm64 LKM 设备。.ko 需与当前内核版本匹配，否则内核会拒绝加载（不会强行加载）</string>
+    <string name="susfs_module_loaded">已加载 SUSFS 内核模块：%1$s，内核现已支持 SUSFS</string>
+    <string name="susfs_module_already">SUSFS 内核模块已加载：%1$s</string>
+    <string name="susfs_module_no_ko">未检测到 SUSFS 内核模块（.ko）：请确认已安装 susfs4ksu 模块或自备匹配内核的 .ko 后重试</string>
+    <string name="susfs_module_failed">加载失败：%1$s</string>
+
     <string name="susfs_env_section">Root 环境</string>
     <string name="susfs_stat_superuser">超级用户</string>
     <string name="susfs_stat_modules">模块</string>

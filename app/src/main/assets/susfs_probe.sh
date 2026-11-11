@@ -122,6 +122,18 @@ echo "SUSFSVER=$SUSV"
 echo "SUSFSFEAT=$SUSFEAT"
 echo "SUSFSVAR=$SUSVAR"
 
+# ---------------------------------------------------------------- SUSFS 独立内核模块 (.ko) 探测
+# SUSFS 除了编译进内核（GKI / builtin），也可作为独立 LKM（susfs_guard_lkm.ko 等）
+# 动态 insmod 注入内核——这正是「不刷内核 / 不改分区」让 arm64 LKM 设备获得 SUSFS 的方式。
+# 优先取 susfs4ksu 模块自带 .ko，再用 find 全盘兜底并过滤 susfs/sui 相关文件名。
+KO=""
+for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
+  KO=$(find "$D" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)
+  [ -n "$KO" ] && break
+done
+[ -z "$KO" ] && KO=$(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)
+echo "KO=$KO"
+
 # ---------------------------------------------------------------- 工作模式（互斥、单一真实状态）
 # LKM：KernelSU 以「可加载内核模块」注入原厂内核，不替换内核，不刷 boot/init_boot。
 #      /proc/modules 会出现 kernelsu/sukisu 模块；越狱模式属于 LKM 的一种特殊形态。

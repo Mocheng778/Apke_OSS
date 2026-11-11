@@ -95,6 +95,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         binding.applyBtn.setOnClickListener {
             applyAll()
         }
+        binding.loadModuleBtn.setOnClickListener { loadModule() }
 
         loadDetection(refresh = false)
     }
@@ -137,6 +138,9 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             if (env.jailbreak || env.permissive) View.VISIBLE else View.GONE
 
         renderModeChip(env.workMode)
+        binding.koStatus.text = if (env.susfsKo.isNotEmpty())
+            getString(R.string.susfs_module_status_found, env.susfsKo)
+        else getString(R.string.susfs_module_status_none)
         renderEnvInfo(env)
     }
 
@@ -312,6 +316,32 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         val hideMnt: Boolean,
     )
 
+    /** 加载 SUSFS 独立内核模块（LKM）：动态 insmod，不刷分区，越狱模式同样安全。 */
+    private fun loadModule() {
+        binding.loadModuleBtn.isEnabled = false
+        thread {
+            val hasRoot = DeviceInfo.hasRoot()
+            val r = if (hasRoot) DeviceInfo.loadSusfsModule() else null
+            if (isAdded) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    binding.loadModuleBtn.isEnabled = true
+                    when {
+                        r == null -> snack(R.string.susfs_apply_noroot)
+                        r.state == "no_ko" -> snack(R.string.susfs_module_no_ko)
+                        r.state == "loaded" -> snack(getString(R.string.susfs_module_loaded, r.path))
+                        r.state == "already" -> snack(getString(R.string.susfs_module_already, r.path))
+                        r.state == "failed" -> snack(
+                            getString(R.string.susfs_module_failed,
+                                if (r.error.isNotEmpty()) r.error else "insmod 被内核拒绝（vermagic/KMI 不匹配）")
+                        )
+                        else -> snack(R.string.susfs_apply_failed)
+                    }
+                    loadDetection(refresh = true)
+                }
+            }
+        }
+    }
+
     private fun applyAll() {
         val paths = (selectedPresets() + customPaths()).distinct().sorted()
 
@@ -412,6 +442,26 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             }
             lines += "chmod 644 $dir/config.sh $dir/sus_path.txt 2>/dev/null || true"
         }
+
+        // 先尝试加载 SUSFS 独立内核模块（LKM）：仅当存在且尚未加载时 insmod，
+        // 不刷分区、不动 GKI SUSFS 配置与 KernelSU KO，越狱模式下安全。
+        lines += "KO=\"\""
+        lines += "for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do"
+        lines += "  KO=\$(find \"\$D\" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)"
+        lines += "  [ -n \"\$KO\" ] && break"
+        lines += "done"
+        lines += "[ -z \"\$KO\" ] && KO=\$(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)"
+        lines += "if [ -n \"\$KO\" ]; then"
+        lines += "  KN=\$(basename \"\$KO\" .ko)"
+        lines += "  if ! grep -q \"\$KN\" /proc/modules 2>/dev/null; then"
+        lines += "    insmod \"\$KO\" 2>/dev/null && echo KO_LOADED=1 || echo KO_LOADED=0"
+        lines += "  else"
+        lines += "    echo KO_LOADED=1"
+        lines += "  fi"
+        lines += "  echo KO_PATH=\"\$KO\""
+        lines += "else"
+        lines += "  echo KO_LOADED=NA"
+        lines += "fi"
 
         // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数
         lines += "BIN=''"

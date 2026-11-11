@@ -113,6 +113,56 @@ object DeviceInfo {
 
     fun hasRoot(): Boolean = runShell("su -c 'id -u'", 3)?.trim() == "0"
 
+    /**
+     * 加载 SUSFS 独立内核模块（LKM）：动态 insmod 注入内核，不刷分区、不触碰 boot/system/vendor/vbmeta，
+     * 因此越狱模式（临时 LKM root）下同样安全，且「现有 GKI SUSFS 配置与 KernelSU KO 保持不变」。
+     * 前提：设备上需存在与当前内核版本匹配的 .ko（通常为 susfs4ksu 模块自带，或用户自备）。
+     * 不匹配的 ko 会被内核拒绝（vermagic/KMI 不符），不会强行加载。
+     */
+    data class ModuleLoadResult(
+        val state: String, // loaded / already / no_ko / failed
+        val path: String,
+        val error: String,
+    )
+
+    fun loadSusfsModule(): ModuleLoadResult {
+        val script = """
+            KO=${'$'}$(true)
+            for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
+              KO=${'$'}(find "${'$'}D" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)
+              [ -n "${'$'}KO" ] && break
+            done
+            [ -z "${'$'}KO" ] && KO=${'$'}(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)
+            if [ -z "${'$'}KO" ]; then echo MOD_STATE=no_ko; exit 0; fi
+            KN=${'$'}(basename "${'$'}KO" .ko)
+            echo MOD_PATH="${'$'}KO"
+            if grep -q "${'$'}KN" /proc/modules 2>/dev/null; then
+              echo MOD_STATE=already
+            else
+              ERR=${'$'}(mktemp)
+              if insmod "${'$'}KO" 2="${'$'}ERR"; then
+                echo MOD_STATE=loaded
+              else
+                echo MOD_STATE=failed
+                echo MOD_ERR="${'$'}(head -c 300 "${'$'}ERR" | tr '\n' ' ')"
+              fi
+              rm -f "${'$'}ERR"
+            fi
+        """.trimIndent()
+        val out = execRootCapture(script, 20)
+            ?: return ModuleLoadResult("failed", "", "执行失败，请确认已授予 Root 权限")
+        val map = HashMap<String, String>()
+        out.lineSequence().forEach { l ->
+            val i = l.indexOf('=')
+            if (i > 0) map[l.substring(0, i).trim()] = l.substring(i + 1).trim()
+        }
+        return ModuleLoadResult(
+            state = map["MOD_STATE"].orEmpty(),
+            path = map["MOD_PATH"].orEmpty(),
+            error = map["MOD_ERR"].orEmpty(),
+        )
+    }
+
     // ---------------------------------------------------------------- Root 环境探测
 
     /** 互斥的单一真实工作模式：LKM / GKI / LKM 越狱。 */
@@ -151,6 +201,8 @@ object DeviceInfo {
         val susfsBin: String,
         val susfsFeatures: String,
         val susfsVariant: String,
+        /** SUSFS 独立内核模块 (.ko) 路径；非空即探测到可用的独立 LKM，可经 insmod 动态加载。 */
+        val susfsKo: String,
         /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
         val jailbreak: Boolean = false,
         val permissive: Boolean = false,
@@ -233,6 +285,7 @@ object DeviceInfo {
             susfsBin = v("SUSBIN", ""),
             susfsFeatures = v("SUSFSFEAT", ""),
             susfsVariant = v("SUSFSVAR", ""),
+            susfsKo = v("KO", ""),
             jailbreak = jailbreak,
             permissive = permissive,
         )
