@@ -123,6 +123,48 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ================= 越狱模式分区安全警示（仅越狱/permissive 时显示） ================= -->
+            <LinearLayout
+                android:id="@+id/jb_warning_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/susfs_warning_bg"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/susfs_jb_warning_title"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                    android:textColor="?attr/colorError"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/susfs_jb_warning"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="?attr/colorError" />
+
+            </LinearLayout>
+
+            <!-- ================= 安全说明（始终显示） ================= -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/susfs_safe_bg"
+                android:padding="12dp"
+                android:text="@string/susfs_safe_banner"
+                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                android:textColor="?android:attr/textColorSecondary" />
+
             <!-- ================= Root 环境详情 ================= -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

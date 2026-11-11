@@ -121,6 +121,9 @@ object DeviceInfo {
         val modes: List<ModeTag>,
         val susfs: Boolean,
         val susfsVersion: String,
+        /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
+        val jailbreak: Boolean = false,
+        val permissive: Boolean = false,
     )
 
     /**
@@ -157,6 +160,14 @@ object DeviceInfo {
 
         val working = map["SU"] == "0" || (map.isEmpty() && hasRoot())
 
+        // 越狱模式（运行时动态加载 LKM 的临时 root）与 permissive SELinux：
+        // 这两种状态下改动任何分区都会破坏 AVB / dm-verity 验证启动链，导致无法开机或格机。
+        // 因此 App 在这两种状态下必须显示警示，并且只写 /data/adb/ 数据区、不做内核下发。
+        val jailbreak = map["JAILBREAK"] == "1"
+        val permissive = map["PERMISSIVE"] == "1" ||
+            map["SELINUX"]?.equals("Permissive", ignoreCase = true) == true ||
+            selinuxMode().equals("Permissive", ignoreCase = true)
+
         val modes = buildList {
             if (map["LKM"] == "1") add(ModeTag("LKM"))
             if (map["GKI"] == "1") add(ModeTag("GKI"))
@@ -179,6 +190,8 @@ object DeviceInfo {
             modes = modes,
             susfs = map["SUSFS"] == "1",
             susfsVersion = v("SUSFSVER", ""),
+            jailbreak = jailbreak,
+            permissive = permissive,
         )
         lastEnv = env
         return env

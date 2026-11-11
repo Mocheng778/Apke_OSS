@@ -2,6 +2,12 @@
 # 采集 Root 环境信息。每行输出 KEY=VALUE，由 DeviceInfo.detectRoot() 解析。
 # 注意：内核级精确状态只有 Root 管理器自身能读取，本脚本中的
 # 「工作模式 / 钩子类型」为基于环境特征的启发式推断。
+#
+# 安全约束：本脚本全程只读（cat / getprop / grep / ls / id / uname），
+# 不写 /dev/block/* 或任何分区。越狱模式（运行时动态加载 LKM 的临时 root）
+# 与 permissive SELinux 下，任何分区写入都会破坏 AVB / dm-verity 验证启动链，
+# 导致无法开机或格机清除数据。JAILBREAK / PERMISSIVE 输出即用于 App 侧
+# 显示警示并进入「只写 /data/adb/ 配置、不做内核下发」的安全模式。
 PATH=/system/bin:/system/xbin:/vendor/bin:/data/adb/ksu/bin:/data/adb/ap/bin:$PATH
 export PATH
 

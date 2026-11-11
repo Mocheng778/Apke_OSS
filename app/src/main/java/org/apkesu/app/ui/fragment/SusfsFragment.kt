@@ -54,6 +54,18 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         )
 
         private const val SUSFS_DIR = "/data/adb/susfs4ksu"
+
+        /**
+         * 分区写入守卫：自定义路径只允许这些字符，杜绝 shell 元字符注入
+         * （; | & $ ` > < 换行 等一旦进入脚本可能被拼成 dd/flash 写分区命令）。
+         */
+        private val PATH_ALLOWED = Regex("^/[A-Za-z0-9/._-]+$")
+
+        /** 块设备 / 伪文件系统路径，严禁作为隐藏路径添加。 */
+        private val BLOCKED_PREFIXES = listOf("/dev/", "/proc/", "/sys/")
+
+        private fun isSafePath(path: String): Boolean =
+            PATH_ALLOWED.matches(path) && BLOCKED_PREFIXES.none { path.startsWith(it) }
     }
 
     private val prefs get() = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -119,6 +131,10 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             R.string.susfs_version_label,
             if (env.working) "$version · ${env.framework}" else env.framework
         )
+
+        // 越狱模式 / permissive：改动分区会破坏验证启动链导致格机，显示红字警示
+        binding.jbWarningCard.visibility =
+            if (env.jailbreak || env.permissive) View.VISIBLE else View.GONE
 
         renderModeChips(env.modes)
         renderEnvInfo(env)
@@ -249,8 +265,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                 snack(R.string.susfs_path_empty)
                 return
             }
-            !raw.startsWith("/") || raw.any { it.isWhitespace() } || raw.contains("'") -> {
+            !raw.startsWith("/") || !PATH_ALLOWED.matches(raw) -> {
                 snack(R.string.susfs_path_invalid)
+                return
+            }
+            BLOCKED_PREFIXES.any { raw.startsWith(it) } -> {
+                snack(R.string.susfs_path_blocked)
                 return
             }
         }
@@ -285,24 +305,29 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             return
         }
 
-        // 主线程一次性读取开关状态，后续 shell 操作全部放后台
+        // 主线程一次性读取开关状态与 UI 状态，后续 shell 操作全部放后台
         val state = SwitchState(
             appHide = binding.switchAppHide.isChecked,
             kernelSpoof = binding.switchKernelSpoof.isChecked,
             susfsLog = binding.switchSusfsLog.isChecked,
             hideMnt = binding.switchHideMntNonroot.isChecked,
         )
+        val uiSafeMode = binding.jbWarningCard.visibility == View.VISIBLE
+        val appContext = requireContext().applicationContext
 
         binding.loadEnableBtn.isEnabled = false
         binding.applyBtn.isEnabled = false
 
         thread {
-            // 只要有 root 即允许写入配置：
-            // 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，
-            // 也兼容 LKM / GKI / 自定义内核 / 越狱模式（permissive + 运行时加载 LKM 的临时 root）。
-            // 不再以「是否检测到 SUSFS 补丁内核」作为写入前置条件。
             val hasRoot = DeviceInfo.hasRoot()
-            val ok = if (hasRoot) DeviceInfo.execRoot(buildScript(state, paths)) else false
+            val env = if (hasRoot) DeviceInfo.detectRoot(appContext, force = false) else null
+            // 越狱模式 / permissive：只写 /data/adb/ 配置，不做任何内核下发。
+            // 探测不可用时保守按安全模式处理，宁可不下发也不能冒险动内核。
+            val safeMode = uiSafeMode ||
+                env?.let { it.jailbreak || it.permissive } == true ||
+                env == null
+
+            val ok = if (hasRoot) DeviceInfo.execRoot(buildScript(state, paths, safeMode)) else false
 
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -310,18 +335,28 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     binding.applyBtn.isEnabled = true
                     when {
                         !hasRoot -> snack(R.string.susfs_apply_noroot)
-                        ok -> snack(getString(R.string.susfs_loaded, paths.size))
-                        else -> snack(R.string.susfs_apply_failed)
+                        !ok -> snack(R.string.susfs_apply_failed)
+                        safeMode -> snack(getString(R.string.susfs_loaded_safe, paths.size))
+                        else -> snack(getString(R.string.susfs_loaded, paths.size))
                     }
                 }
             }
         }
     }
 
-    private fun buildScript(state: SwitchState, paths: List<String>): String {
+    /**
+     * 分区写入守卫：
+     * - 所有「写入目标」严格限定为 /data/adb/ 下的 config.sh 与 sus_path.txt；
+     * - 用户提供的路径只作为文件内容 / 内核 ioctl 参数，绝不会拼接成写入目标路径；
+     * - 不含任何 dd / flash / 块设备操作，不触碰 boot、system、vendor、vbmeta 等分区；
+     * - safeMode（越狱模式 / permissive）下连 ksu_susfs 内核下发都跳过，只保存配置。
+     *   越狱模式是运行时动态加载 LKM 的临时 root，改动分区会破坏验证启动链导致格机。
+     */
+    private fun buildScript(state: SwitchState, paths: List<String>, safeMode: Boolean): String {
         val lines = mutableListOf<String>()
+        val sanitized = paths.filter { isSafePath(it) }
 
-        // susfs4ksu 在不同实现/模块版本下可能落在多个位置，全部覆盖写入
+        // susfs4ksu 在不同实现/模块版本下可能落在多个位置，全部覆盖写入（均为 /data/adb/ 数据区）
         val dirs = listOf(
             SUSFS_DIR,
             "/data/adb/modules/susfs4ksu",
@@ -337,12 +372,13 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             "hide_sus_mnts_for_non_su_procs=${if (state.hideMnt) 1 else 0}",
         )
         val cfgArgs = cfg.joinToString(" ") { "'$it'" }
-        val pathArgs = if (paths.isEmpty()) "" else paths.joinToString(" ") { "'$it'" }
+        val pathArgs = if (sanitized.isEmpty()) "" else sanitized.joinToString(" ") { "'$it'" }
 
+        lines += "# partition guard: every write target is under /data/adb/ only; no block/partition writes"
         for (dir in dirs) {
             lines += "mkdir -p $dir 2>/dev/null || true"
             lines += "printf '%s\\n' $cfgArgs > $dir/config.sh 2>/dev/null || true"
-            lines += if (paths.isEmpty()) {
+            lines += if (sanitized.isEmpty()) {
                 ": > $dir/sus_path.txt 2>/dev/null || true"
             } else {
                 "printf '%s\\n' $pathArgs > $dir/sus_path.txt 2>/dev/null || true"
@@ -350,15 +386,18 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             lines += "chmod 644 $dir/config.sh $dir/sus_path.txt 2>/dev/null || true"
         }
 
-        // 若 ksu_susfs 可用，立即下发路径（越狱模式可能没有该二进制，失败不影响配置写入）
-        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
-        lines += "  if [ -x \$b ]; then"
-        for (path in paths) {
-            lines += "    \$b add_sus_path '$path' 2>/dev/null || true"
+        // 内核 ioctl 即时下发（不写分区）。越狱模式 / permissive 下跳过，
+        // 避免临时 root 环境里产生任何内核态副作用；配置留待已刷好补丁内核时生效。
+        if (!safeMode && sanitized.isNotEmpty()) {
+            lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
+            lines += "  if [ -x \$b ]; then"
+            for (path in sanitized) {
+                lines += "    \$b add_sus_path '$path' 2>/dev/null || true"
+            }
+            lines += "    break"
+            lines += "  fi"
+            lines += "done"
         }
-        lines += "    break"
-        lines += "  fi"
-        lines += "done"
 
         lines += "true"
         return lines.joinToString("\n")
