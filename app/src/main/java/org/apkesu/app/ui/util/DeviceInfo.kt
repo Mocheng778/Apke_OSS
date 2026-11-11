@@ -273,6 +273,10 @@ object DeviceInfo {
         /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
         val jailbreak: Boolean = false,
         val permissive: Boolean = false,
+        /** 探测脚本是否成功返回数据；false 表示 root 执行通道异常，下列环境信息不可信。 */
+        val probeOk: Boolean = true,
+        /** 探测失败时的真实诊断信息（su stderr / 超时说明），用于如实告知用户。 */
+        val probeError: String = "",
     )
 
     /**
@@ -283,7 +287,11 @@ object DeviceInfo {
      * 「工作模式（LKM/GKI/自定义/越狱模式）」与「钩子类型」为基于环境特征的启发式推断。
      */
     fun detectRoot(context: Context?, force: Boolean = false): RootEnv {
-        if (!force) lastEnv?.let { return it }
+        // 首页可能用 detectRoot(null)（读不到 assets）先缓存了一个「探测失败」的空结果；
+        // 若本次带上了 context 且缓存不可信，则强制重采，避免污染 SUSFS 页显示。
+        if (!force) lastEnv?.let { cached ->
+            if (cached.probeOk || context == null) return cached
+        }
 
         val script = try {
             context?.assets?.open("susfs_probe.sh")?.bufferedReader()?.use { it.readText() }
@@ -292,16 +300,22 @@ object DeviceInfo {
         }
 
         val map = HashMap<String, String>()
-        if (!script.isNullOrEmpty()) {
-            execRootCapture(script)?.lineSequence()?.forEach { line ->
-                val idx = line.indexOf('=')
-                if (idx > 0) {
-                    val key = line.substring(0, idx).trim()
-                    if (key.isNotEmpty() && key.all { it.isUpperCase() || it.isDigit() || it == '_' }) {
-                        map[key] = line.substring(idx + 1).trim()
-                    }
+        val probeResult = if (!script.isNullOrEmpty()) execRootDetail(script, 12) else null
+        probeResult?.out?.lineSequence()?.forEach { line ->
+            val idx = line.indexOf('=')
+            if (idx > 0) {
+                val key = line.substring(0, idx).trim()
+                if (key.isNotEmpty() && key.all { it.isUpperCase() || it.isDigit() || it == '_' }) {
+                    map[key] = line.substring(idx + 1).trim()
                 }
             }
+        }
+        // 探测是否真正成功：必须能解析出 SU 这类基准字段。失败时后续「工作模式 / 越狱」
+        // 判定都不可信，UI 需如实显示诊断而不是伪装成「工作中 / 已 Root」。
+        val probeOk = map.containsKey("SU") || map.containsKey("KERNEL")
+        val probeError = if (probeOk) "" else buildString {
+            append(if (probeResult == null) "无法读取内置探测脚本" else "root 探测脚本未返回有效数据")
+            probeResult?.err?.takeIf { it.isNotBlank() }?.let { append("：").append(it.trim().take(220)) }
         }
 
         fun v(key: String, fallback: String = "未知"): String =
@@ -377,6 +391,8 @@ object DeviceInfo {
             ksudAutoload = v("KSUDAUTO", ""),
             jailbreak = jailbreak,
             permissive = permissive,
+            probeOk = probeOk,
+            probeError = probeError,
         )
         lastEnv = env
         return env
@@ -385,21 +401,10 @@ object DeviceInfo {
     // ---------------------------------------------------------------- shell 执行
 
     /**
-     * 以 root shell 执行脚本并捕获 stdout。
-     *
-     * 实现要点（修订 9 · 修复「执行失败，请确认已授予 Root 权限」误报）：
-     * - 统一使用 `su -c` 命令式调用，与 hasRoot() 完全一致；脚本经 base64 编码后通过
-     *   `echo <b64> | base64 -d | sh` 注入，彻底避免引号转义与交互式 shell 卡死。
-     * - 旧的 `ProcessBuilder("su")` + stdin 喂脚本方式在 KernelSU / Magisk 下会让 su
-     *   开一个不随 EOF 退出的交互式 shell，waitFor 超时后被强杀返回 null，从而误报
-     *   「执行失败」——其实 hasRoot()（同样走 su -c）是成功的。本实现规避该问题。
-     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
-     */
-    /**
-     * 带诊断信息的 root 执行结果（修订 10）。
-     * - finished=false 且 err 含「su 启动失败」：su 二进制不可用或启动被拒；
-     * - finished=false 且无该提示：su 在规定时间内无响应（典型为权限未授予导致 su 卡住）；
-     * - finished=true 但 out 为空且 err 非空：su 已运行但内部命令报错（如脚本写入失败、Permission denied）。
+     * 带诊断信息的 root 执行结果。
+     * - finished=false：su 在规定时间内无响应（su 不可用、被拒绝或卡在授权弹窗）；
+     * - finished=true 但 out 为空且 err 非空：su 已运行但脚本内部报错；
+     * - finished=true 且 out 非空：执行成功。
      */
     data class RootExecResult(
         val finished: Boolean,
@@ -409,50 +414,85 @@ object DeviceInfo {
     )
 
     /**
-     * 以 root shell 执行脚本，分离捕获 stdout / stderr，并返回是否超时。
+     * 以 root 权限执行 shell 脚本，分离捕获 stdout / stderr。
      *
-     * 实现（修订 10 · 去除 base64 依赖 + 规避交互式 shell 卡死）：
-     * 1. 把脚本以**纯文本**写入 /data/local/tmp/ 下临时文件（该目录对所有进程可写可读）；
-     * 2. 用 `su -c "sh <脚本路径>"` 命令式执行——sh 读完文件即退出，不会像旧的 stdin 交互式
-     *    shell 那样卡住导致 waitFor 超时；
-     * 3. 不再依赖 base64（部分裁剪过的 root shell 没有 base64 会导致整条 pipeline 失败，
-     *    表现为「执行失败」误报）。
+     * 修订 14 · 根因修复：旧实现「由 App 进程把脚本写到 /data/local/tmp/，再 su -c \"sh <路径>\"」
+     * 在标准 Android 上行不通——/data/local/tmp 属 shell:shell、权限 0771，普通 App 无写权限，
+     * writeText 抛异常被吞掉后返回 finished=false。于是探测 map 全空（工作模式未知、超级用户/模块
+     * 显示 —）、下发 out=null（误报「执行失败，请确认已授予 Root 权限」），而 hasRoot() 走
+     * `su -c 'id -u'` 不写文件却成功，造成「已 Root 却说没权限」的自相矛盾。
+     *
+     * 新通道完全不落盘、不依赖 base64，与已验证可用的 hasRoot() 同样经 `sh -c` 调 su，
+     * 脚本正文通过 stdin 喂给 root 的非交互 sh（零转义、引号与 $ 全部原样），写完 close
+     * 触发 EOF，脚本末尾补显式 exit 0，规避交互式 su 不随 EOF 退出导致的超时强杀。
+     * 两级回退：`su -c sh`（标准）→ `su`（兼容不支持 -c 的变体）。
+     * 仅当某一级超时/启动失败才尝试下一级；某级 finished=true 即立即返回，
+     * 避免重复执行写配置的脚本。两级皆失败时返回带真实 stderr 的诊断信息。
      * 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
      */
     fun execRootDetail(script: String, timeoutSeconds: Long = 12): RootExecResult {
-        val tmpDir = java.io.File("/data/local/tmp")
-        val scriptFile = java.io.File(tmpDir, "apkesu_exec_${System.nanoTime()}.sh")
+        val body = script.trimEnd() + "\nexit 0\n"
+        val attempts = mutableListOf<Pair<String, RootExecResult>>()
+
+        for (cmd in listOf("su -c sh", "su")) {
+            val r = execSu(cmd, body, timeoutSeconds)
+            if (r.finished) return r   // 执行完成即返回；即使 stdout 为空也以真实 stderr 上报
+            attempts += cmd to r
+        }
+
+        val diag = attempts.joinToString(" | ") { (cmd, r) ->
+            "[$cmd]${if (r.finished) "exit=${r.exit}" else "超时/未完成"}" +
+                (r.err.takeIf { it.isNotBlank() }?.let { ", err=${it.trim().take(160)}" } ?: "")
+        }
+        return RootExecResult(
+            false, "",
+            "su 未能在 ${timeoutSeconds}s 内返回（多为 Root 管理器未授予本应用权限或授权弹窗被拒）。诊断：$diag",
+            -1,
+        )
+    }
+
+    /** 经 `sh -c` 启动 su、把脚本写入 stdin、并行排空 stdout/stderr 并等待结束。 */
+    private fun execSu(shellCmd: String, stdin: String, timeoutSeconds: Long): RootExecResult {
+        var process: Process? = null
         return try {
-            if (!tmpDir.exists()) tmpDir.mkdirs()
-            scriptFile.writeText(script.trimEnd() + "\n")
-            scriptFile.setReadable(true, false)
-            scriptFile.setExecutable(true, false)
-            val cmd = "su -c \"sh ${scriptFile.absolutePath}\""
-            val process = ProcessBuilder("sh", "-c", cmd).start()
+            process = ProcessBuilder("sh", "-c", shellCmd).start()
+            val p = process
             val outS = StringBuilder()
             val errS = StringBuilder()
             val tOut = Thread {
                 try {
-                    process.inputStream.bufferedReader().forEachLine { outS.append(it).append('\n') }
+                    p.inputStream.bufferedReader().forEachLine { synchronized(outS) { outS.append(it).append('\n') } }
                 } catch (_: Throwable) {
                 }
             }
             val tErr = Thread {
                 try {
-                    process.errorStream.bufferedReader().forEachLine { errS.append(it).append('\n') }
+                    p.errorStream.bufferedReader().forEachLine { synchronized(errS) { errS.append(it).append('\n') } }
                 } catch (_: Throwable) {
                 }
             }
             tOut.start(); tErr.start()
-            val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
-            if (!finished) process.destroyForcibly()
+            try {
+                p.outputStream.bufferedWriter().use { w ->
+                    w.write(stdin)
+                    w.flush()
+                } // close → root sh 收到 EOF，配合脚本末尾 exit 0 立即退出
+            } catch (_: Throwable) {
+            }
+            val finished = p.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+            if (!finished) p.destroyForcibly()
             tOut.join(1500); tErr.join(1500)
-            RootExecResult(finished, outS.toString(), errS.toString(), if (finished) process.exitValue() else -1)
-        } catch (_: Throwable) {
-            RootExecResult(false, "", "su 启动失败，或脚本写入 /data/local/tmp 失败（请确认 su 可用且该目录可写）", -1)
+            RootExecResult(
+                finished,
+                synchronized(outS) { outS.toString() },
+                synchronized(errS) { errS.toString() },
+                if (finished) p.exitValue() else -1,
+            )
+        } catch (t: Throwable) {
+            RootExecResult(false, "", "su 启动失败：${t.javaClass.simpleName} ${t.message ?: ""}", -1)
         } finally {
             try {
-                scriptFile.delete()
+                process?.destroy()
             } catch (_: Throwable) {
             }
         }
@@ -460,9 +500,9 @@ object DeviceInfo {
 
     /** 兼容旧调用：仅返回 stdout（超时或 su 不可用返回 null）。 */
     fun execRootCapture(script: String, timeoutSeconds: Long = 12): String? =
-        execRootDetail(script, timeoutSeconds).takeIf { it.finished }?.out
+        execRootDetail(script, timeoutSeconds).takeIf { it.finished && it.out.isNotBlank() }?.out
 
-    /** 以 root shell 执行脚本（不关心输出）。同样走 `su -c "sh <tmpfile>"`。 */
+    /** 以 root shell 执行脚本（不关心输出）。 */
     fun execRoot(script: String, timeoutSeconds: Long = 15): Boolean {
         val r = execRootDetail(script, timeoutSeconds)
         return r.finished && r.exit == 0
