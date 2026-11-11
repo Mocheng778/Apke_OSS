@@ -62,6 +62,38 @@ done
 [ -z "$VER" ] && VER=$(getprop ro.sukisu.version 2>/dev/null)
 echo "FWVER=$VER"
 
+# ---------------------------------------------------------------- 管理器类型与 ksud 原生 SUSFS 接口
+# 不同管理器提供不同的 SUSFS 调用入口：
+#   KernelSU Next → ksud susfs load / features / support / autoload（原生 LKM 加载，按 KMI 管理预编译模块）
+#   SukiSU Ultra  → 内置 SUSFS 管理器，ksu_susfs 位于 /data/adb/ksu/bin
+#   KernelSU 官方 / SterSU → 需另装 susfs4ksu 用户态模块，统一用 ksu_susfs
+# 归一化类型供 App 选择「从各管理器的 GKI 原生调用 SUSFS」的入口。
+MGRTYPE=UNKNOWN
+case "$FW" in
+  *SukiSU*)          MGRTYPE=SUKISU ;;
+  *KernelSU Next*)   MGRTYPE=KSU_NEXT ;;
+  KernelSU)          MGRTYPE=KSU ;;
+  *SterSU*)          MGRTYPE=STERSU ;;
+  *APatch*)          MGRTYPE=APATCH ;;
+  *Magisk*)          MGRTYPE=MAGISK ;;
+esac
+echo "MGRTYPE=$MGRTYPE"
+
+KSUD=""
+for K in /data/adb/ksud /data/adb/ksu/bin/ksud /data/adb/ap/bin/apd; do
+  if [ -x "$K" ]; then KSUD=$K; break; fi
+done
+[ -z "$KSUD" ] && KSUD=$(command -v ksud 2>/dev/null)
+echo "KSUD=$KSUD"
+[ -n "$KSUD" ] && echo "KSUDVER=$("$KSUD" -V 2>/dev/null | head -n1 | tr -d '\r\n')"
+
+# KernelSU Next 原生 SUSFS 接口能力（只读探查，不做任何加载/写入）
+if [ -n "$KSUD" ]; then
+  echo "KSUDSUP=$("$KSUD" susfs support 2>/dev/null | head -n1 | tr -d '\r\n')"
+  echo "KSUDFEAT=$("$KSUD" susfs features 2>/dev/null | tr '\r\n' ' ' | cut -c1-400)"
+  echo "KSUDAUTO=$("$KSUD" susfs autoload status 2>/dev/null | head -n1 | tr -d '\r\n')"
+fi
+
 # ---------------------------------------------------------------- SUSFS 权威探测
 # SUSFS 是「编译进内核」的补丁（CONFIG_KSU_SUSFS=y，builtin），
 # /proc/modules 里通常没有 susfs 模块名，SUSFS 甚至会主动隐藏自身模块痕迹；
@@ -90,12 +122,14 @@ if [ -n "$SUSBIN" ]; then
   SUSVAR=$("$SUSBIN" show variant 2>/dev/null | head -n1 | tr -d '\r\n')
 fi
 
-# KernelSU-Next 内置 susfs 检查
+# KernelSU-Next 原生 susfs 检查：用 ksud 的 support / autoload 判定内核支持，
+# 用 ksud susfs features 兜底填充已启用特性（当 ksu_susfs 二进制缺失时尤其有用）
 KSUDSUP=""
 if command -v ksud >/dev/null 2>&1; then
   KSUDSUP=$(ksud susfs support 2>/dev/null | head -n1 | tr -d '\r\n')
   [ -z "$SUSFEAT" ] && SUSFEAT=$(ksud susfs features 2>/dev/null | tr '\r\n' ' ' | cut -c1-400)
 fi
+# 已采集的 KSUDSUP / KSUDFEAT / KSUDAUTO 由上面的 ksud 探测段输出，这里不再重复
 
 # dmesg 兜底（内核打了补丁但用户态工具缺失时）
 DMESGSUS=0

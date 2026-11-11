@@ -119,13 +119,43 @@ object DeviceInfo {
      * 不匹配的 ko 会被内核拒绝（vermagic/KMI 不符），不会强行加载。
      */
     data class ModuleLoadResult(
-        val state: String, // loaded / already / no_ko / failed
+        val state: String, // loaded / already / no_ko / failed / no_tool
         val path: String,
         val error: String,
+        /** 实际采用的加载方式：ksud（KernelSU Next 原生）/ insmod（手动 LKM 加载）。 */
+        val method: String = "",
     )
 
     fun loadSusfsModule(): ModuleLoadResult {
+        // 多管理器原生调用：KernelSU Next 优先用其原生 ksud susfs load（按 KMI 加载预编译模块，
+        // 并启用 autoload 开机自启）；其余管理器（SukiSU / KernelSU 官方 / SterSU）无 ksud，
+        // 回退到手动 insmod 独立 LKM（susfs_guard_lkm.ko 等）。两者都不刷分区、不触碰 GKI 配置。
         val script = """
+            KSUD=""
+            for K in /data/adb/ksud /data/adb/ksu/bin/ksud /data/adb/ap/bin/apd; do
+              [ -x "${'$'}K" ] && KSUD="${'$'}K" && break
+            done
+            [ -z "${'$'}KSUD" ] && KSUD=${'$'}(command -v ksud 2>/dev/null)
+
+            if [ -n "${'$'}KSUD" ]; then
+              OUT=${'$'}({ "${'$'}KSUD" susfs load; } 2>&1)
+              RC=${'$'}?
+              if [ ${'$'}RC -eq 0 ]; then
+                "${'$'}KSUD" susfs autoload enable >/dev/null 2>&1
+                echo MOD_METHOD=ksud
+                echo MOD_STATE=loaded
+                echo MOD_PATH=${'$'}(echo "${'$'}OUT" | head -n1)
+                echo MOD_ERR=${'$'}OUT
+                exit 0
+              else
+                echo MOD_METHOD=ksud
+                echo MOD_STATE=failed
+                echo MOD_ERR=${'$'}OUT
+                exit 0
+              fi
+            fi
+            echo MOD_METHOD=insmod
+
             KO=${'$'}$(true)
             for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
               KO=${'$'}(find "${'$'}D" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)
@@ -152,13 +182,13 @@ object DeviceInfo {
         if (!res.finished) {
             val detail = res.err.takeIf { it.isNotBlank() }?.trim()
                 ?: "su 在 25 秒内无响应（通常是 Root 管理器未授予本应用权限，su 卡住未返回）"
-            return ModuleLoadResult("failed", "", "执行失败：$detail。请确认已在 KernelSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」")
+            return ModuleLoadResult("failed", "", "执行失败：$detail。请确认已在 KernelSU / SukiSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」", "")
         }
         val out = res.out
         if (out.isBlank()) {
             val detail = res.err.takeIf { it.isNotBlank() }?.trim()
-                ?: "su 已执行但无任何输出（可能 base64 不可用，或 su 被拒绝）"
-            return ModuleLoadResult("failed", "", "执行失败：$detail")
+                ?: "su 已执行但无任何输出（可能 su 被拒绝）"
+            return ModuleLoadResult("failed", "", "执行失败：$detail", "")
         }
         val map = HashMap<String, String>()
         out.lineSequence().forEach { l ->
@@ -169,6 +199,7 @@ object DeviceInfo {
             state = map["MOD_STATE"].orEmpty(),
             path = map["MOD_PATH"].orEmpty(),
             error = map["MOD_ERR"].orEmpty(),
+            method = map["MOD_METHOD"].orEmpty(),
         )
     }
 
@@ -188,6 +219,17 @@ object DeviceInfo {
         TOOL_ONLY("未生效：内核未带 SUSFS 补丁"),
         KERNEL_NOTOOL("内核已支持，缺少 ksu_susfs 工具"),
         NONE("未检测到（内核与用户态模块均未部署）"),
+    }
+
+    /** Root 管理器类型，决定 SUSFS 的原生调用入口。 */
+    enum class ManagerType {
+        SUKISU,   // SukiSU Ultra：内置 SUSFS 管理器，ksu_susfs 在 /data/adb/ksu/bin
+        KSU_NEXT, // KernelSU Next：原生 ksud susfs load/features/support/autoload
+        KSU,      // KernelSU 官方：需另装 susfs4ksu，统一用 ksu_susfs
+        STERSU,   // SterSU：需另装 susfs4ksu，统一用 ksu_susfs
+        APATCH,   // APatch：用户态 KPM，无内核 SUSFS
+        MAGISK,   // Magisk：不支持 SUSFS
+        UNKNOWN,
     }
 
     data class RootEnv(
@@ -212,6 +254,16 @@ object DeviceInfo {
         val susfsVariant: String,
         /** SUSFS 独立内核模块 (.ko) 路径；非空即探测到可用的独立 LKM，可经 insmod 动态加载。 */
         val susfsKo: String,
+        /** Root 管理器类型，决定 SUSFS 原生调用入口（ksud / 内置管理器 / susfs4ksu）。 */
+        val managerType: ManagerType,
+        /** KernelSU Next 的 ksud 二进制路径（空表示不可用）。 */
+        val ksudPath: String,
+        /** ksud susfs support 输出（内核是否支持 SUSFS 的原生判定）。 */
+        val ksudSusfsSupport: String,
+        /** ksud susfs features 输出（已启用特性）。 */
+        val ksudSusfsFeatures: String,
+        /** ksud susfs autoload status 输出（开机自动加载是否启用）。 */
+        val ksudAutoload: String,
         /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
         val jailbreak: Boolean = false,
         val permissive: Boolean = false,
@@ -275,6 +327,18 @@ object DeviceInfo {
             else -> SusfsState.NONE
         }
 
+        // 管理器类型：归一化为 SUKISU / KSU_NEXT / KSU / STERSU / APATCH / MAGISK / UNKNOWN，
+        // App 据此选择「从各管理器的 GKI 原生调用 SUSFS」的入口。
+        val managerType = when (map["MGRTYPE"]) {
+            "SUKISU" -> ManagerType.SUKISU
+            "KSU_NEXT" -> ManagerType.KSU_NEXT
+            "KSU" -> ManagerType.KSU
+            "STERSU" -> ManagerType.STERSU
+            "APATCH" -> ManagerType.APATCH
+            "MAGISK" -> ManagerType.MAGISK
+            else -> ManagerType.UNKNOWN
+        }
+
         val env = RootEnv(
             working = working,
             framework = v("FW", if (working) "已 Root" else "未检测到"),
@@ -295,6 +359,11 @@ object DeviceInfo {
             susfsFeatures = v("SUSFSFEAT", ""),
             susfsVariant = v("SUSFSVAR", ""),
             susfsKo = v("KO", ""),
+            managerType = managerType,
+            ksudPath = v("KSUD", ""),
+            ksudSusfsSupport = v("KSUDSUP", ""),
+            ksudSusfsFeatures = v("KSUDFEAT", ""),
+            ksudAutoload = v("KSUDAUTO", ""),
             jailbreak = jailbreak,
             permissive = permissive,
         )

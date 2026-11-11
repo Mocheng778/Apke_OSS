@@ -346,7 +346,7 @@
     <string name="susfs_module_status_found">%1$s</string>
     <string name="susfs_module_status_none">未检测到（建议安装 susfs4ksu 模块或自备匹配内核的 .ko）</string>
     <string name="susfs_module_load">加载内核模块</string>
-    <string name="susfs_module_summary">将 SUSFS 以独立 LKM 动态注入内核：不刷分区、不触碰 boot/system/vendor/vbmeta，保留现有 GKI SUSFS 配置与 KernelSU KO 不变</string>
+    <string name="susfs_module_summary">将 SUSFS 动态注入内核（不刷分区）：KernelSU Next 走原生 ksud susfs load，其余管理器 insmod 独立 LKM；均不触碰 boot/system/vendor/vbmeta，保留现有 GKI 配置与 KernelSU KO 不变</string>
     <string name="susfs_module_note">适用：兼容的 arm64 LKM 设备。.ko 需与当前内核版本匹配，否则内核会拒绝加载（不会强行加载）</string>
     <string name="susfs_module_loaded">已加载 SUSFS 内核模块：%1$s，内核现已支持 SUSFS</string>
     <string name="susfs_module_already">SUSFS 内核模块已加载：%1$s</string>
@@ -371,6 +371,18 @@
     <string name="susfs_info_susfs_bin_missing">未找到（请先安装 susfs4ksu 模块，或在内核中内置 SUSFS）</string>
     <string name="susfs_info_susfs_variant">SUSFS 形态</string>
     <string name="susfs_info_susfs_features">已启用特性</string>
+    <string name="susfs_info_mgr_susfs">SUSFS 接口</string>
+    <string name="susfs_info_ksud_autoload">ksud 自动加载</string>
+    <string name="susfs_mgr_sukisu">SukiSU 内置 SUSFS 管理器（ksu_susfs）</string>
+    <string name="susfs_mgr_ksu_next">KernelSU Next · ksud susfs（%1$s）</string>
+    <string name="susfs_mgr_ksu_next_plain">KernelSU Next · ksud susfs（原生 LKM 加载）</string>
+    <string name="susfs_mgr_ksu">KernelSU 官方 + susfs4ksu（ksu_susfs）</string>
+    <string name="susfs_mgr_stersu">SterSU + susfs4ksu（ksu_susfs）</string>
+    <string name="susfs_mgr_apatch">APatch：用户态 KPM，无内核 SUSFS</string>
+    <string name="susfs_mgr_magisk">Magisk：不支持 SUSFS</string>
+    <string name="susfs_mgr_unknown">未知管理器</string>
+    <string name="susfs_method_ksud">ksud 原生调用</string>
+    <string name="susfs_method_insmod">insmod 独立模块</string>
     <string name="susfs_mode_disclaimer">工作模式按 /proc/modules、/sys/module、内核版本与越狱特征互斥判定，只显示一种：LKM 工作模式 / GKI 工作模式 / LKM 越狱工作模式。越狱模式为临时提权，重启后可能失效，且严禁改动任何分区；但路径隐藏走内核内存态 supercall，三种模式下均可正常使用。</string>
 
     <string name="susfs_switches_section">隐藏开关</string>

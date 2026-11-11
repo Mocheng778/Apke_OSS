@@ -197,6 +197,11 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                 if (env.susfsBin.isNotEmpty()) env.susfsBin
                 else getString(R.string.susfs_info_susfs_bin_missing)
             )
+            // 当前实际调用的 SUSFS 入口：明确「从哪个管理器的 GKI 原生调用」
+            add(R.string.susfs_info_mgr_susfs to mgrSusfsText(env))
+            if (env.ksudAutoload.isNotEmpty()) {
+                add(R.string.susfs_info_ksud_autoload to env.ksudAutoload)
+            }
             if (env.susfsVariant.isNotEmpty()) {
                 add(R.string.susfs_info_susfs_variant to env.susfsVariant)
             }
@@ -215,6 +220,26 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).toInt()
+
+    /** 把管理器类型映射为「当前所调用的 SUSFS 入口」可读文案。 */
+    private fun mgrSusfsText(env: DeviceInfo.RootEnv): String = when (env.managerType) {
+        DeviceInfo.ManagerType.SUKISU ->
+            getString(R.string.susfs_mgr_sukisu)
+        DeviceInfo.ManagerType.KSU_NEXT ->
+            if (env.ksudSusfsSupport.isNotEmpty())
+                getString(R.string.susfs_mgr_ksu_next, env.ksudSusfsSupport)
+            else getString(R.string.susfs_mgr_ksu_next_plain)
+        DeviceInfo.ManagerType.KSU ->
+            getString(R.string.susfs_mgr_ksu)
+        DeviceInfo.ManagerType.STERSU ->
+            getString(R.string.susfs_mgr_stersu)
+        DeviceInfo.ManagerType.APATCH ->
+            getString(R.string.susfs_mgr_apatch)
+        DeviceInfo.ManagerType.MAGISK ->
+            getString(R.string.susfs_mgr_magisk)
+        else ->
+            getString(R.string.susfs_mgr_unknown)
+    }
 
     // ---------------------------------------------------------------- 开关
 
@@ -328,8 +353,14 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     when {
                         r == null -> snack(R.string.susfs_apply_noroot)
                         r.state == "no_ko" -> snack(R.string.susfs_module_no_ko)
-                        r.state == "loaded" -> snack(getString(R.string.susfs_module_loaded, r.path))
-                        r.state == "already" -> snack(getString(R.string.susfs_module_already, r.path))
+                        r.state == "loaded" -> snack(
+                            getString(R.string.susfs_module_loaded,
+                                "${r.path} · ${if (r.method == "ksud") getString(R.string.susfs_method_ksud) else getString(R.string.susfs_method_insmod)}")
+                        )
+                        r.state == "already" -> snack(
+                            getString(R.string.susfs_module_already,
+                                "${r.path} · ${if (r.method == "ksud") getString(R.string.susfs_method_ksud) else getString(R.string.susfs_method_insmod)}")
+                        )
                         r.state == "failed" -> snack(
                             getString(R.string.susfs_module_failed,
                                 if (r.error.isNotEmpty()) r.error else "insmod 被内核拒绝（vermagic/KMI 不匹配）")
