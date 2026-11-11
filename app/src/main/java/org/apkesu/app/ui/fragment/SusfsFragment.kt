@@ -191,6 +191,10 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             add(R.string.susfs_info_selinux to env.selinux)
             add(R.string.susfs_info_fingerprint to env.fingerprint)
             add(R.string.susfs_info_susfs to susfsText)
+            // 版本不匹配时，把 ksu_susfs 返回的真实提示原样展示，避免误读为「未带补丁」
+            if (env.susfsVersionMismatch && env.susfsMismatchMsg.isNotEmpty()) {
+                add(R.string.susfs_info_version_mismatch to env.susfsMismatchMsg)
+            }
             // 始终展示 ksu_susfs 工具状态；为空即「未找到」，明确告知用户需安装 susfs4ksu 模块
             add(
                 R.string.susfs_info_susfs_bin to
@@ -407,6 +411,14 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             val haveBin = out?.lineSequence()
                 ?.firstOrNull { it.startsWith("SUS_HAVE_BIN=") }
                 ?.substringAfter("=")?.trim() == "1"
+            val susErr = out?.lineSequence()
+                ?.firstOrNull { it.startsWith("SUS_ERR=") }
+                ?.substringAfter("=")?.trim() ?: ""
+            // 版本不匹配：ksu_susfs 与内核 SUSFS 补丁版本不兼容（如工具要求 v1.5.3+ 而内核更早）。
+            // 内核实际有补丁，因此与「未带补丁」区分，需提示用户对齐版本。
+            val isMismatch = susErr.contains("requires", ignoreCase = true) ||
+                susErr.contains("v1.", ignoreCase = true) ||
+                env?.susfsVersionMismatch == true
             val total = paths.size
 
             if (isAdded) {
@@ -417,7 +429,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                         !hasRoot -> snack(R.string.susfs_apply_noroot)
                         out == null -> snack(R.string.susfs_apply_failed)
                         !haveBin -> snack(getString(R.string.susfs_apply_no_tool, total))
-                        applied == 0 -> snack(getString(R.string.susfs_apply_no_kernel, total))
+                        applied == 0 -> if (isMismatch) {
+                            snack(getString(R.string.susfs_apply_version_mismatch, total,
+                                susErr.takeIf { it.isNotEmpty() } ?: "ksu_susfs 与内核 SUSFS 版本不匹配"))
+                        } else {
+                            snack(getString(R.string.susfs_apply_no_kernel, total))
+                        }
                         applied < total -> snack(getString(R.string.susfs_apply_partial, applied, total))
                         else -> snack(getString(R.string.susfs_loaded, applied))
                     }
@@ -494,7 +511,8 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         lines += "  echo KO_LOADED=NA"
         lines += "fi"
 
-        // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数
+        // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数。
+        // 首条不下发时捕获 stderr，用于如实报告「版本不匹配」等真实失败原因（而非笼统「未带补丁」）。
         lines += "BIN=''"
         lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/bin/ksu_susfs /data/adb/susfs4ksu/ksu_susfs /data/adb/susfs/bin/ksu_susfs /data/adb/ksu/susfs/ksu_susfs /system/bin/ksu_susfs; do"
         lines += "  [ -x \"\$b\" ] && BIN=\"\$b\" && break"
@@ -502,14 +520,23 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         lines += "[ -z \"\$BIN\" ] && BIN=\$(command -v ksu_susfs 2>/dev/null)"
         lines += "[ -z \"\$BIN\" ] && BIN=\$(find /data/adb -maxdepth 6 -name ksu_susfs -type f -executable 2>/dev/null | head -n1)"
         lines += "APPLIED=0"
+        lines += "SUS_ERR=\"\""
         lines += "if [ -n \"\$BIN\" ]; then"
+        var firstPath = true
         for (path in sanitized) {
-            lines += "  \"\$BIN\" add_sus_path '$path' >/dev/null 2>&1 && APPLIED=\$((APPLIED+1))"
+            if (firstPath) {
+                lines += "  E=\$(\"\$BIN\" add_sus_path '$path' 2>&1)"
+                lines += "  if [ \$? -eq 0 ]; then APPLIED=\$((APPLIED+1)); else SUS_ERR=\"\$E\"; fi"
+                firstPath = false
+            } else {
+                lines += "  \"\$BIN\" add_sus_path '$path' >/dev/null 2>&1 && APPLIED=\$((APPLIED+1))"
+            }
         }
         lines += "  echo SUS_HAVE_BIN=1"
         lines += "else"
         lines += "  echo SUS_HAVE_BIN=0"
         lines += "fi"
+        lines += "echo SUS_ERR=\"\$SUS_ERR\""
         lines += "echo SUS_APPLIED=\$APPLIED"
 
         lines += "true"
