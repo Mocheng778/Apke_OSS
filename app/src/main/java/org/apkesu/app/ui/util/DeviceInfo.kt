@@ -2,7 +2,6 @@ package org.apkesu.app.ui.util
 
 import android.content.Context
 import android.os.Build
-import android.util.Base64
 import java.util.concurrent.TimeUnit
 
 /**
@@ -149,8 +148,18 @@ object DeviceInfo {
               rm -f "${'$'}ERR"
             fi
         """.trimIndent()
-        val out = execRootCapture(script, 20)
-            ?: return ModuleLoadResult("failed", "", "执行失败，请确认已授予 Root 权限")
+        val res = execRootDetail(script, 25)
+        if (!res.finished) {
+            val detail = res.err.takeIf { it.isNotBlank() }?.trim()
+                ?: "su 在 25 秒内无响应（通常是 Root 管理器未授予本应用权限，su 卡住未返回）"
+            return ModuleLoadResult("failed", "", "执行失败：$detail。请确认已在 KernelSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」")
+        }
+        val out = res.out
+        if (out.isBlank()) {
+            val detail = res.err.takeIf { it.isNotBlank() }?.trim()
+                ?: "su 已执行但无任何输出（可能 base64 不可用，或 su 被拒绝）"
+            return ModuleLoadResult("failed", "", "执行失败：$detail")
+        }
         val map = HashMap<String, String>()
         out.lineSequence().forEach { l ->
             val i = l.indexOf('=')
@@ -307,50 +316,77 @@ object DeviceInfo {
      * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，
      * 越狱模式（permissive + 运行时加载 LKM 的临时 root）下同样可用。
      */
-    fun execRootCapture(script: String, timeoutSeconds: Long = 12): String? = try {
-        val b64 = Base64.encodeToString(
-            script.trimEnd().toByteArray(Charsets.UTF_8),
-            Base64.NO_WRAP
-        )
-        val cmd = "su -c \"echo $b64 | base64 -d | sh\""
-        val process = ProcessBuilder("sh", "-c", cmd)
-            .redirectErrorStream(true)
-            .start()
-        val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
-        val out = if (finished) {
-            try {
-                process.inputStream.bufferedReader().readText()
-            } catch (_: Throwable) {
-                ""
+    /**
+     * 带诊断信息的 root 执行结果（修订 10）。
+     * - finished=false 且 err 含「su 启动失败」：su 二进制不可用或启动被拒；
+     * - finished=false 且无该提示：su 在规定时间内无响应（典型为权限未授予导致 su 卡住）；
+     * - finished=true 但 out 为空且 err 非空：su 已运行但内部命令报错（如脚本写入失败、Permission denied）。
+     */
+    data class RootExecResult(
+        val finished: Boolean,
+        val out: String,
+        val err: String,
+        val exit: Int,
+    )
+
+    /**
+     * 以 root shell 执行脚本，分离捕获 stdout / stderr，并返回是否超时。
+     *
+     * 实现（修订 10 · 去除 base64 依赖 + 规避交互式 shell 卡死）：
+     * 1. 把脚本以**纯文本**写入 /data/local/tmp/ 下临时文件（该目录对所有进程可写可读）；
+     * 2. 用 `su -c "sh <脚本路径>"` 命令式执行——sh 读完文件即退出，不会像旧的 stdin 交互式
+     *    shell 那样卡住导致 waitFor 超时；
+     * 3. 不再依赖 base64（部分裁剪过的 root shell 没有 base64 会导致整条 pipeline 失败，
+     *    表现为「执行失败」误报）。
+     * 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，越狱模式同样可用。
+     */
+    fun execRootDetail(script: String, timeoutSeconds: Long = 12): RootExecResult {
+        val tmpDir = java.io.File("/data/local/tmp")
+        val scriptFile = java.io.File(tmpDir, "apkesu_exec_${System.nanoTime()}.sh")
+        return try {
+            if (!tmpDir.exists()) tmpDir.mkdirs()
+            scriptFile.writeText(script.trimEnd() + "\n")
+            scriptFile.setReadable(true, false)
+            scriptFile.setExecutable(true, false)
+            val cmd = "su -c \"sh ${scriptFile.absolutePath}\""
+            val process = ProcessBuilder("sh", "-c", cmd).start()
+            val outS = StringBuilder()
+            val errS = StringBuilder()
+            val tOut = Thread {
+                try {
+                    process.inputStream.bufferedReader().forEachLine { outS.append(it).append('\n') }
+                } catch (_: Throwable) {
+                }
             }
-        } else {
-            process.destroyForcibly()
-            ""
+            val tErr = Thread {
+                try {
+                    process.errorStream.bufferedReader().forEachLine { errS.append(it).append('\n') }
+                } catch (_: Throwable) {
+                }
+            }
+            tOut.start(); tErr.start()
+            val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+            if (!finished) process.destroyForcibly()
+            tOut.join(1500); tErr.join(1500)
+            RootExecResult(finished, outS.toString(), errS.toString(), if (finished) process.exitValue() else -1)
+        } catch (_: Throwable) {
+            RootExecResult(false, "", "su 启动失败，或脚本写入 /data/local/tmp 失败（请确认 su 可用且该目录可写）", -1)
+        } finally {
+            try {
+                scriptFile.delete()
+            } catch (_: Throwable) {
+            }
         }
-        out.takeIf { finished }
-    } catch (_: Throwable) {
-        null
     }
 
-    /** 以 root shell 执行脚本（不关心输出）。同样走 `su -c` + base64，规避交互式 shell 卡死。 */
-    fun execRoot(script: String, timeoutSeconds: Long = 15): Boolean = try {
-        val b64 = Base64.encodeToString(
-            script.trimEnd().toByteArray(Charsets.UTF_8),
-            Base64.NO_WRAP
-        )
-        val cmd = "su -c \"echo $b64 | base64 -d | sh\""
-        val process = ProcessBuilder("sh", "-c", cmd)
-            .redirectErrorStream(true)
-            .start()
-        val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
-        if (!finished) {
-            process.destroyForcibly()
-            false
-        } else {
-            process.exitValue() == 0
-        }
-    } catch (_: Throwable) {
-        false
+    /** 兼容旧调用：仅返回 stdout（超时或 su 不可用返回 null）。 */
+    fun execRootCapture(script: String, timeoutSeconds: Long = 12): String? =
+        execRootDetail(script, timeoutSeconds).takeIf { it.finished }?.out
+
+    /** 以 root shell 执行脚本（不关心输出）。同样走 `su -c "sh <tmpfile>"`。 */
+    fun execRoot(script: String, timeoutSeconds: Long = 15): Boolean {
+        val r = execRootDetail(script, timeoutSeconds)
+        return r.finished && r.exit == 0
     }
 
     private fun fileExists(path: String): Boolean = try {
