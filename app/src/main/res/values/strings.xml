@@ -309,7 +309,7 @@
     <string name="home_hidden_subtitle_off">请检查 Zygisk 模块是否已激活</string>
     <string name="home_info_title">设备状态</string>
     <string name="home_device_label">机型</string>
-    <string name="home_app_count_label">应用数量</string>
+    <string name="home_app_count_label">已安装应用（不含系统）</string>
     <string name="home_module_count_label">模块数量</string>
     <string name="home_env_label">环境检测</string>
     <string name="home_root_label">Root框架</string>

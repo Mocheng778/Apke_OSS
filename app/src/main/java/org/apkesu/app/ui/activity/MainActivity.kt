@@ -67,9 +67,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun styleBottomNavigation(binding: ActivityMainBinding) {
+        // 选中指示胶囊：柔和粉色高亮
         val indicatorColor = ColorStateList(
             arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-            intArrayOf(0xFFFF9FC0.toInt(), Color.TRANSPARENT)
+            intArrayOf(0x33E91E63.toInt(), Color.TRANSPARENT)
         )
         binding.bottomNav.itemActiveIndicatorColor = indicatorColor
 
@@ -77,7 +78,9 @@ class MainActivity : AppCompatActivity() {
             intArrayOf(android.R.attr.state_checked),
             intArrayOf(-android.R.attr.state_checked)
         )
-        val colors = intArrayOf(Color.WHITE, 0x99FFFFFF.toInt())
+        // 三个 Tab（主页 / 功能 / 我的）的图标与文字统一为粉红色：
+        // 选中用较深的玫粉保证浅色底栏上的可读性，未选中用略浅的粉红。
+        val colors = intArrayOf(0xFFD81B60.toInt(), 0xFFEC6A9C.toInt())
         binding.bottomNav.itemTextColor = ColorStateList(states, colors)
         binding.bottomNav.itemIconTintList = ColorStateList(states, colors)
     }

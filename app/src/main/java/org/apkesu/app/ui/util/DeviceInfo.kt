@@ -23,8 +23,15 @@ object DeviceInfo {
         }.ifEmpty { "未知设备" }
     }
 
+    /**
+     * 只统计用户自行安装的第三方应用，排除系统预置软件（含被用户更新过的系统应用）。
+     * 系统应用带有 FLAG_SYSTEM 标记，过滤掉即可得到「已安装应用」数量。
+     */
     fun installedAppCount(context: Context): Int = try {
-        context.packageManager.getInstalledPackages(0).size
+        context.packageManager.getInstalledPackages(0).count { pkg ->
+            val flags = pkg.applicationInfo?.flags ?: 0
+            flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM == 0
+        }
     } catch (_: Throwable) {
         0
     }
