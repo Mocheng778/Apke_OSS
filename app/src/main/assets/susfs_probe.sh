@@ -116,10 +116,22 @@ fi
 SUSV=""
 SUSFEAT=""
 SUSVAR=""
+SUSMISMATCH=0
+SUSMSG=""
 if [ -n "$SUSBIN" ]; then
   SUSV=$("$SUSBIN" show version 2>/dev/null | head -n1 | tr -d '\r\n')
   SUSFEAT=$("$SUSBIN" show enabled_features 2>/dev/null | tr '\r\n' ' ' | cut -c1-400)
   SUSVAR=$("$SUSBIN" show variant 2>/dev/null | head -n1 | tr -d '\r\n')
+  # 版本不匹配检测：用户态 ksu_susfs 与内核 SUSFS 补丁版本不兼容时，
+  # ksu_susfs 会返回 "Requires susfs v1.5.3+" 之类提示，此时 add_sus_path 全部失败，
+  # 路径隐藏无法生效。原样捕获该提示上报，避免误报「内核未带补丁」或「已启用」。
+  for O in "$SUSV" "$SUSVAR" "$SUSFEAT"; do
+    if echo "$O" | grep -qiE 'requires susfs|v1\.[0-9]+\.[0-9]+ ?\+'; then
+      SUSMISMATCH=1
+      SUSMSG=$(echo "$O" | head -c 200 | tr '\n' ' ')
+      break
+    fi
+  done
 fi
 
 # KernelSU-Next 原生 susfs 检查：用 ksud 的 support / autoload 判定内核支持，
@@ -155,6 +167,8 @@ echo "SUSBIN=$SUSBIN"
 echo "SUSFSVER=$SUSV"
 echo "SUSFSFEAT=$SUSFEAT"
 echo "SUSFSVAR=$SUSVAR"
+echo "SUSMISMATCH=$SUSMISMATCH"
+echo "SUSMSG=$SUSMSG"
 
 # ---------------------------------------------------------------- SUSFS 独立内核模块 (.ko) 探测
 # SUSFS 除了编译进内核（GKI / builtin），也可作为独立 LKM（susfs_guard_lkm.ko 等）
