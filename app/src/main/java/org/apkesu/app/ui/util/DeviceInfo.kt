@@ -188,7 +188,9 @@ object DeviceInfo {
 
         // 越狱模式（运行时动态加载 LKM 的临时 root）与 permissive SELinux：
         // 这两种状态下改动任何分区都会破坏 AVB / dm-verity 验证启动链，导致无法开机或格机。
-        // 因此 App 在这两种状态下必须显示警示，并且只写 /data/adb/ 数据区、不做内核下发。
+        // 因此 App 在这两种状态下必须显示警示，并禁止一切刷写分区的操作。
+        // 注意：被禁止的只有「写分区」；ksu_susfs add_sus_path 是纯内存态 supercall，
+        // 不写分区、不破坏验证启动链，越狱模式下同样允许执行（见 SusfsFragment.buildScript）。
         val jailbreak = map["JAILBREAK"] == "1"
         val permissive = map["PERMISSIVE"] == "1" ||
             map["SELINUX"]?.equals("Permissive", ignoreCase = true) == true ||
