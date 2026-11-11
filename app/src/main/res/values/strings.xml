@@ -328,11 +328,28 @@
     <string name="susfs_support_yes">已启用</string>
     <string name="susfs_support_no">未检测到（需 SUSFS 补丁内核）</string>
     <string name="susfs_support_checking">检测中…</string>
+    <string name="susfs_status_working">工作中</string>
+    <string name="susfs_status_inactive">未激活</string>
+    <string name="susfs_version_label">版本：%1$s</string>
     <string name="susfs_root_framework">Root框架</string>
     <string name="susfs_load_enable">加载并启用</string>
-    <string name="susfs_load_enable_summary">读取状态、写入配置并尝试立即生效</string>
-    <string name="susfs_jailbreak_mode">越狱模式（兼容模式）</string>
-    <string name="susfs_jailbreak_summary">未检测到 SUSFS 内核时仍强制写入配置</string>
+    <string name="susfs_load_enable_summary">重新读取 Root 环境并写入路径隐藏配置</string>
+
+    <string name="susfs_env_section">Root 环境</string>
+    <string name="susfs_stat_superuser">超级用户</string>
+    <string name="susfs_stat_modules">模块</string>
+    <string name="susfs_info_framework">Root 框架</string>
+    <string name="susfs_info_manager_ver">管理器版本</string>
+    <string name="susfs_info_kernel">内核版本</string>
+    <string name="susfs_info_kernel_full">内核完整版本</string>
+    <string name="susfs_info_hook">钩子类型</string>
+    <string name="susfs_info_zygisk">Zygisk 实现</string>
+    <string name="susfs_info_selinux">SELinux</string>
+    <string name="susfs_info_fingerprint">系统指纹</string>
+    <string name="susfs_info_susfs">SUSFS 支持</string>
+    <string name="susfs_info_susfs_yes">已启用</string>
+    <string name="susfs_info_susfs_no">未检测到</string>
+    <string name="susfs_mode_disclaimer">工作模式（LKM / GKI / 自定义 / 越狱模式）与钩子类型由内核特征推断，精确状态以对应 Root 管理器显示为准。</string>
 
     <string name="susfs_switches_section">隐藏开关</string>
     <string name="susfs_app_hide">应用隐藏</string>
@@ -361,5 +378,5 @@
     <string name="susfs_apply_noroot">未检测到 Root，无法写入</string>
     <string name="susfs_select_first">请先选择或添加需要隐藏的路径</string>
     <string name="susfs_loaded">已加载并尝试启用，%1$d 条路径已下发</string>
-    <string name="susfs_hint">SUSFS 为 KernelSU 内核特性，需刷入带 SUSFS 补丁的内核并配合 susfs4ksu 模块；配置写入 /data/adb/susfs4ksu/，重启后生效。越狱模式可在无 SUSFS 内核时强制写入。</string>
+    <string name="susfs_hint">配置写入 /data/adb/susfs4ksu/（config.sh / sus_path.txt），重启后生效。已适配 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，并兼容 LKM、GKI、自定义内核与越狱模式（permissive + 运行时加载 LKM 的临时 root）。完整 SUSFS 路径隐藏仍需带 SUSFS 补丁的内核与 susfs4ksu 模块。</string>
 </resources>

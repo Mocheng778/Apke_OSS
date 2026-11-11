@@ -3,6 +3,7 @@ package org.apkesu.app.ui.util
 import android.content.Context
 import android.os.Build
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * 轻量级设备 / Root 环境探测工具。
@@ -56,7 +57,12 @@ object DeviceInfo {
         return "未检测到"
     }
 
+    /** 首页「Root框架」：优先返回一次完整探测得到的真实品牌。 */
+    @Volatile
+    private var lastEnv: RootEnv? = null
+
     fun rootFramework(): String {
+        lastEnv?.let { if (it.working) return it.framework }
         val viaSu = runShell(
             "su -c 'if [ -d /data/adb/ksu ]; then echo KernelSU; elif [ -d /data/adb/apd ] || [ -f /data/adb/apd ]; then echo APatch; elif [ -d /data/adb/magisk ]; then echo Magisk; else echo none; fi'",
             4
@@ -70,16 +76,9 @@ object DeviceInfo {
         return "未检测到"
     }
 
-    fun susfsSupported(): Boolean {
-        val viaSu = runShell(
-            "su -c 'cat /proc/modules | grep -qi susfs && echo yes; test -d /sys/module/susfs && echo yes; test -f /data/adb/ksu/bin/ksu_susfs && echo yes'",
-            4
-        )?.trim()
-        return viaSu?.contains("yes") == true
-    }
+    fun susfsSupported(): Boolean = detectRoot(null).susfs
 
-    fun susfsVersion(): String? = runShell("su -c '/data/adb/ksu/bin/ksu_susfs show version'", 4)
-        ?.trim()?.takeIf { it.isNotEmpty() }
+    fun susfsVersion(): String? = detectRoot(null).susfsVersion.takeIf { it.isNotEmpty() }
 
     /** 探测 ksu_susfs 二进制，兼容不同 susfs4ksu 版本与越狱环境。 */
     fun ksuSusfsBin(): String? {
@@ -103,10 +102,116 @@ object DeviceInfo {
 
     fun hasRoot(): Boolean = runShell("su -c 'id -u'", 3)?.trim() == "0"
 
+    // ---------------------------------------------------------------- Root 环境探测
+
+    data class ModeTag(val label: String, val accent: Boolean = false)
+
+    data class RootEnv(
+        val working: Boolean,
+        val framework: String,
+        val frameworkVersion: String,
+        val kernel: String,
+        val kernelFull: String,
+        val hookType: String,
+        val zygisk: String,
+        val selinux: String,
+        val fingerprint: String,
+        val superuser: String,
+        val modules: String,
+        val modes: List<ModeTag>,
+        val susfs: Boolean,
+        val susfsVersion: String,
+    )
+
     /**
-     * 以 root shell 执行脚本。脚本通过 stdin 喂给 su，避免引号转义问题，
-     * 同时兼容 KernelSU / APatch / Magisk 等实现（越狱模式同样适用）。
+     * 运行 assets/susfs_probe.sh 采集真实 Root 环境。
+     * 结果缓存，供首页与 SUSFS 页共用；force=true 时强制重新采集。
+     *
+     * 说明：内核级精确状态只有 Root 管理器自身能读取，
+     * 「工作模式（LKM/GKI/自定义/越狱模式）」与「钩子类型」为基于环境特征的启发式推断。
      */
+    fun detectRoot(context: Context?, force: Boolean = false): RootEnv {
+        if (!force) lastEnv?.let { return it }
+
+        val script = try {
+            context?.assets?.open("susfs_probe.sh")?.bufferedReader()?.use { it.readText() }
+        } catch (_: Throwable) {
+            null
+        }
+
+        val map = HashMap<String, String>()
+        if (!script.isNullOrEmpty()) {
+            execRootCapture(script)?.lineSequence()?.forEach { line ->
+                val idx = line.indexOf('=')
+                if (idx > 0) {
+                    val key = line.substring(0, idx).trim()
+                    if (key.isNotEmpty() && key.all { it.isUpperCase() || it.isDigit() || it == '_' }) {
+                        map[key] = line.substring(idx + 1).trim()
+                    }
+                }
+            }
+        }
+
+        fun v(key: String, fallback: String = "未知"): String =
+            map[key]?.takeIf { it.isNotEmpty() } ?: fallback
+
+        val working = map["SU"] == "0" || (map.isEmpty() && hasRoot())
+
+        val modes = buildList {
+            if (map["LKM"] == "1") add(ModeTag("LKM"))
+            if (map["GKI"] == "1") add(ModeTag("GKI"))
+            if (map["CUSTOM"] == "1") add(ModeTag("自定义"))
+            if (map["JAILBREAK"] == "1") add(ModeTag("越狱模式", accent = true))
+        }
+
+        val env = RootEnv(
+            working = working,
+            framework = v("FW", if (working) "已 Root" else "未检测到"),
+            frameworkVersion = v("FWVER", "—"),
+            kernel = v("KERNEL"),
+            kernelFull = v("KERNELFULL"),
+            hookType = v("HOOK"),
+            zygisk = v("ZYGISK", "未检测到"),
+            selinux = v("SELINUX", selinuxMode()),
+            fingerprint = v("FP"),
+            superuser = v("SUPERUSER", "—"),
+            modules = v("MODULES", "—"),
+            modes = modes,
+            susfs = map["SUSFS"] == "1",
+            susfsVersion = v("SUSFSVER", ""),
+        )
+        lastEnv = env
+        return env
+    }
+
+    // ---------------------------------------------------------------- shell 执行
+
+    /**
+     * 以 root shell 执行脚本并捕获 stdout。脚本通过 stdin 喂给 su，避免引号转义问题，
+     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
+     * 越狱模式（permissive + 运行时加载 LKM 的临时 root）下同样可用。
+     */
+    fun execRootCapture(script: String, timeoutSeconds: Long = 12): String? = try {
+        val process = ProcessBuilder("su").start()
+        process.outputStream.use { it.write((script.trimEnd() + "\n").toByteArray()) }
+        val captured = AtomicReference("")
+        val reader = Thread {
+            captured.set(try {
+                process.inputStream.bufferedReader().readText()
+            } catch (_: Throwable) {
+                ""
+            })
+        }
+        reader.start()
+        val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+        if (!finished) process.destroyForcibly()
+        reader.join(1500)
+        captured.get().takeIf { finished }
+    } catch (_: Throwable) {
+        null
+    }
+
+    /** 以 root shell 执行脚本（不关心输出）。 */
     fun execRoot(script: String, timeoutSeconds: Long = 15): Boolean = try {
         val process = ProcessBuilder("su")
             .redirectErrorStream(true)

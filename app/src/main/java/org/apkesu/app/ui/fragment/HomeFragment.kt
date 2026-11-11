@@ -242,11 +242,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             infoRowValue.text = DeviceInfo.installedAppCount(requireContext()).toString()
         }
 
-        // 需要 Root 的探测放到后台线程
+        // 需要 Root 的探测放到后台线程（context 提前取好，避免已 detach 时崩溃）
+        val appContext = requireContext().applicationContext
         thread {
+            // 真实识别 Root 框架品牌（KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk）
+            val rootEnv = DeviceInfo.detectRoot(appContext)
             val moduleCount = DeviceInfo.moduleCount()
             val env = "${DeviceInfo.selinuxMode()} · Zygisk ${DeviceInfo.zygiskStatus()}"
-            val root = DeviceInfo.rootFramework()
+            val root = rootEnv.framework
 
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {

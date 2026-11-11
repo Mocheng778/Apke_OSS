@@ -1,9 +1,15 @@
 package org.apkesu.app.ui.fragment
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -14,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.apkesu.app.R
 import org.apkesu.app.databinding.FragmentSusfsBinding
+import org.apkesu.app.databinding.ViewSusfsInfoRowBinding
 import org.apkesu.app.databinding.ViewSusfsPathRowBinding
 import org.apkesu.app.ui.util.DeviceInfo
 import kotlin.concurrent.thread
@@ -24,7 +31,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
     companion object {
         private const val PREFS_NAME = "susfs_path_hide"
 
-        private const val KEY_JAILBREAK = "jailbreak"
         private const val KEY_APP_HIDE = "sw_app_hide"
         private const val KEY_KERNEL_SPOOF = "sw_kernel_spoof"
         private const val KEY_SUSFS_LOG = "sw_susfs_log"
@@ -51,9 +57,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
     }
 
     private val prefs get() = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    @Volatile
-    private var supported = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         with(binding.toolbar) {
@@ -84,44 +87,108 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         loadDetection(refresh = false)
     }
 
-    // ---------------------------------------------------------------- 状态检测
+    // ---------------------------------------------------------------- 状态与环境检测
 
     private fun loadDetection(refresh: Boolean) {
         if (refresh) {
             binding.susfsStatus.setText(R.string.susfs_support_checking)
         }
 
+        val appContext = requireContext().applicationContext
         thread {
-            val isSupported = DeviceInfo.susfsSupported()
-            val version = DeviceInfo.susfsVersion()
-            val framework = DeviceInfo.rootFramework()
-            val features = DeviceInfo.susfsEnabledFeatures()
-            supported = isSupported
+            // 真实识别 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk
+            // 及 LKM / GKI / 自定义 / 越狱模式，越狱模式（临时 root）同样可采集。
+            val env = DeviceInfo.detectRoot(appContext, force = refresh)
 
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {
-                    binding.susfsStatus.setText(
-                        if (isSupported) R.string.susfs_support_yes else R.string.susfs_support_no
-                    )
-                    binding.susfsVersion.text = listOfNotNull(version, features)
-                        .joinToString(" · ")
-                        .takeIf { it.isNotEmpty() }
-                    binding.rootFramework.text = framework
+                    renderStatus(env)
                 }
             }
         }
     }
 
+    private fun renderStatus(env: DeviceInfo.RootEnv) {
+        binding.susfsStatus.setText(
+            if (env.working) R.string.susfs_status_working else R.string.susfs_status_inactive
+        )
+        val version = env.frameworkVersion.takeIf { it != "—" && it.isNotEmpty() }
+            ?: env.kernel.takeIf { it != "未知" && it.isNotEmpty() }
+            ?: "—"
+        binding.susfsVersion.text = getString(
+            R.string.susfs_version_label,
+            if (env.working) "$version · ${env.framework}" else env.framework
+        )
+
+        renderModeChips(env.modes)
+        renderEnvInfo(env)
+    }
+
+    private fun renderModeChips(modes: List<DeviceInfo.ModeTag>) {
+        val container = binding.modeChips
+        container.removeAllViews()
+
+        val shown = modes.ifEmpty { listOf(DeviceInfo.ModeTag("未知模式")) }
+        for (tag in shown) {
+            val chip = TextView(requireContext()).apply {
+                text = tag.label
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setTextColor(if (tag.accent) Color.WHITE else Color.parseColor("#5F4386"))
+                background = ContextCompat.getDrawable(
+                    requireContext(),
+                    if (tag.accent) R.drawable.susfs_chip_jailbreak else R.drawable.susfs_chip_normal
+                )
+                setPadding(dp(10), dp(4), dp(10), dp(4))
+                gravity = Gravity.CENTER
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { marginEnd = dp(8) }
+            container.addView(chip, lp)
+        }
+    }
+
+    private fun renderEnvInfo(env: DeviceInfo.RootEnv) {
+        binding.statSuperuser.text = env.superuser
+        binding.statModules.text = env.modules
+
+        val container = binding.infoContainer
+        container.removeAllViews()
+
+        val rows = listOf(
+            R.string.susfs_info_framework to env.framework,
+            R.string.susfs_info_manager_ver to env.frameworkVersion,
+            R.string.susfs_info_kernel to env.kernel,
+            R.string.susfs_info_kernel_full to env.kernelFull,
+            R.string.susfs_info_hook to env.hookType,
+            R.string.susfs_info_zygisk to env.zygisk,
+            R.string.susfs_info_selinux to env.selinux,
+            R.string.susfs_info_fingerprint to env.fingerprint,
+            R.string.susfs_info_susfs to getString(
+                if (env.susfs) R.string.susfs_info_susfs_yes else R.string.susfs_info_susfs_no
+            ) + if (env.susfsVersion.isNotEmpty()) " ${env.susfsVersion}" else "",
+        )
+
+        for ((labelRes, value) in rows) {
+            val row = ViewSusfsInfoRowBinding.inflate(layoutInflater, container, false)
+            row.infoRowLabel.setText(labelRes)
+            row.infoRowValue.text = value
+            container.addView(row.root)
+        }
+    }
+
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
+
     // ---------------------------------------------------------------- 开关
 
     private fun restoreSwitches() {
-        binding.jailbreakSwitch.isChecked = prefs.getBoolean(KEY_JAILBREAK, false)
         binding.switchAppHide.isChecked = prefs.getBoolean(KEY_APP_HIDE, true)
         binding.switchKernelSpoof.isChecked = prefs.getBoolean(KEY_KERNEL_SPOOF, true)
         binding.switchSusfsLog.isChecked = prefs.getBoolean(KEY_SUSFS_LOG, false)
         binding.switchHideMntNonroot.isChecked = prefs.getBoolean(KEY_HIDE_MNT_NONROOT, true)
 
-        binding.jailbreakSwitch.setOnCheckedChangeListener { _, v -> saveBool(KEY_JAILBREAK, v) }
         binding.switchAppHide.setOnCheckedChangeListener { _, v -> saveBool(KEY_APP_HIDE, v) }
         binding.switchKernelSpoof.setOnCheckedChangeListener { _, v -> saveBool(KEY_KERNEL_SPOOF, v) }
         binding.switchSusfsLog.setOnCheckedChangeListener { _, v -> saveBool(KEY_SUSFS_LOG, v) }
@@ -211,7 +278,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
     )
 
     private fun applyAll() {
-        val jailbreak = binding.jailbreakSwitch.isChecked
         val paths = (selectedPresets() + customPaths()).distinct().sorted()
 
         if (paths.isEmpty()) {
@@ -231,9 +297,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         binding.applyBtn.isEnabled = false
 
         thread {
+            // 只要有 root 即允许写入配置：
+            // 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，
+            // 也兼容 LKM / GKI / 自定义内核 / 越狱模式（permissive + 运行时加载 LKM 的临时 root）。
+            // 不再以「是否检测到 SUSFS 补丁内核」作为写入前置条件。
             val hasRoot = DeviceInfo.hasRoot()
-            val allowed = hasRoot && (supported || jailbreak)
-            val ok = if (allowed) DeviceInfo.execRoot(buildScript(state, paths)) else false
+            val ok = if (hasRoot) DeviceInfo.execRoot(buildScript(state, paths)) else false
 
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -241,7 +310,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     binding.applyBtn.isEnabled = true
                     when {
                         !hasRoot -> snack(R.string.susfs_apply_noroot)
-                        !allowed -> snack(R.string.susfs_support_no)
                         ok -> snack(getString(R.string.susfs_loaded, paths.size))
                         else -> snack(R.string.susfs_apply_failed)
                     }
@@ -252,7 +320,13 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
     private fun buildScript(state: SwitchState, paths: List<String>): String {
         val lines = mutableListOf<String>()
-        lines += "mkdir -p $SUSFS_DIR"
+
+        // susfs4ksu 在不同实现/模块版本下可能落在多个位置，全部覆盖写入
+        val dirs = listOf(
+            SUSFS_DIR,
+            "/data/adb/modules/susfs4ksu",
+            "/data/adb/ksu/susfs4ksu",
+        )
 
         val cfg = listOf(
             "sus_su=${if (state.appHide) 2 else 0}",
@@ -262,24 +336,29 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             "susfs_log=${if (state.susfsLog) 1 else 0}",
             "hide_sus_mnts_for_non_su_procs=${if (state.hideMnt) 1 else 0}",
         )
-        lines += "printf '%s\\n' " + cfg.joinToString(" ") { "'$it'" } +
-            " > $SUSFS_DIR/config.sh"
+        val cfgArgs = cfg.joinToString(" ") { "'$it'" }
+        val pathArgs = if (paths.isEmpty()) "" else paths.joinToString(" ") { "'$it'" }
 
-        lines += if (paths.isEmpty()) {
-            ": > $SUSFS_DIR/sus_path.txt"
-        } else {
-            "printf '%s\\n' " + paths.joinToString(" ") { "'$it'" } +
-                " > $SUSFS_DIR/sus_path.txt"
-        }
-
-        lines += "chmod 644 $SUSFS_DIR/config.sh $SUSFS_DIR/sus_path.txt"
-
-        // 若 ksu_susfs 可用，立即下发路径（越狱模式下即使内核不支持也尽力尝试）
-        DeviceInfo.ksuSusfsBin()?.let { bin ->
-            for (path in paths) {
-                lines += "[ -x $bin ] && $bin add_sus_path '$path' 2>/dev/null || true"
+        for (dir in dirs) {
+            lines += "mkdir -p $dir 2>/dev/null || true"
+            lines += "printf '%s\\n' $cfgArgs > $dir/config.sh 2>/dev/null || true"
+            lines += if (paths.isEmpty()) {
+                ": > $dir/sus_path.txt 2>/dev/null || true"
+            } else {
+                "printf '%s\\n' $pathArgs > $dir/sus_path.txt 2>/dev/null || true"
             }
+            lines += "chmod 644 $dir/config.sh $dir/sus_path.txt 2>/dev/null || true"
         }
+
+        // 若 ksu_susfs 可用，立即下发路径（越狱模式可能没有该二进制，失败不影响配置写入）
+        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
+        lines += "  if [ -x \$b ]; then"
+        for (path in paths) {
+            lines += "    \$b add_sus_path '$path' 2>/dev/null || true"
+        }
+        lines += "    break"
+        lines += "  fi"
+        lines += "done"
 
         lines += "true"
         return lines.joinToString("\n")
