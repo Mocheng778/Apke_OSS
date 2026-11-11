@@ -136,33 +136,31 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         binding.jbWarningCard.visibility =
             if (env.jailbreak || env.permissive) View.VISIBLE else View.GONE
 
-        renderModeChips(env.modes)
+        renderModeChip(env.workMode)
         renderEnvInfo(env)
     }
 
-    private fun renderModeChips(modes: List<DeviceInfo.ModeTag>) {
+    /** 只显示一个互斥的真实工作模式标签（LKM / GKI / LKM 越狱），不再并列堆叠。 */
+    private fun renderModeChip(mode: DeviceInfo.WorkMode) {
         val container = binding.modeChips
         container.removeAllViews()
 
-        val shown = modes.ifEmpty { listOf(DeviceInfo.ModeTag("未知模式")) }
-        for (tag in shown) {
-            val chip = TextView(requireContext()).apply {
-                text = tag.label
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-                setTextColor(if (tag.accent) Color.WHITE else Color.parseColor("#5F4386"))
-                background = ContextCompat.getDrawable(
-                    requireContext(),
-                    if (tag.accent) R.drawable.susfs_chip_jailbreak else R.drawable.susfs_chip_normal
-                )
-                setPadding(dp(10), dp(4), dp(10), dp(4))
-                gravity = Gravity.CENTER
-            }
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { marginEnd = dp(8) }
-            container.addView(chip, lp)
+        val chip = TextView(requireContext()).apply {
+            text = mode.label
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTextColor(if (mode.accent) Color.WHITE else Color.parseColor("#5F4386"))
+            background = ContextCompat.getDrawable(
+                requireContext(),
+                if (mode.accent) R.drawable.susfs_chip_jailbreak else R.drawable.susfs_chip_normal
+            )
+            setPadding(dp(14), dp(6), dp(14), dp(6))
+            gravity = Gravity.CENTER
         }
+        val lp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        container.addView(chip, lp)
     }
 
     private fun renderEnvInfo(env: DeviceInfo.RootEnv) {
@@ -172,19 +170,33 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         val container = binding.infoContainer
         container.removeAllViews()
 
-        val rows = listOf(
-            R.string.susfs_info_framework to env.framework,
-            R.string.susfs_info_manager_ver to env.frameworkVersion,
-            R.string.susfs_info_kernel to env.kernel,
-            R.string.susfs_info_kernel_full to env.kernelFull,
-            R.string.susfs_info_hook to env.hookType,
-            R.string.susfs_info_zygisk to env.zygisk,
-            R.string.susfs_info_selinux to env.selinux,
-            R.string.susfs_info_fingerprint to env.fingerprint,
-            R.string.susfs_info_susfs to getString(
-                if (env.susfs) R.string.susfs_info_susfs_yes else R.string.susfs_info_susfs_no
-            ) + if (env.susfsVersion.isNotEmpty()) " ${env.susfsVersion}" else "",
-        )
+        // SUSFS 支持：显示真实的部署状态（而非仅凭 /proc/modules 的布尔值），
+        // 让用户明白「路径隐藏没生效」到底缺的是内核补丁还是用户态工具。
+        val susfsText = buildString {
+            append(env.susfsState.label)
+            if (env.susfsVersion.isNotEmpty()) append(" ${env.susfsVersion}")
+        }
+
+        val rows = buildList {
+            add(R.string.susfs_info_framework to env.framework)
+            add(R.string.susfs_info_manager_ver to env.frameworkVersion)
+            add(R.string.susfs_info_kernel to env.kernel)
+            add(R.string.susfs_info_kernel_full to env.kernelFull)
+            add(R.string.susfs_info_hook to env.hookType)
+            add(R.string.susfs_info_zygisk to env.zygisk)
+            add(R.string.susfs_info_selinux to env.selinux)
+            add(R.string.susfs_info_fingerprint to env.fingerprint)
+            add(R.string.susfs_info_susfs to susfsText)
+            if (env.susfsBin.isNotEmpty()) {
+                add(R.string.susfs_info_susfs_bin to env.susfsBin)
+            }
+            if (env.susfsVariant.isNotEmpty()) {
+                add(R.string.susfs_info_susfs_variant to env.susfsVariant)
+            }
+            if (env.susfsFeatures.isNotEmpty()) {
+                add(R.string.susfs_info_susfs_features to env.susfsFeatures)
+            }
+        }
 
         for ((labelRes, value) in rows) {
             val row = ViewSusfsInfoRowBinding.inflate(layoutInflater, container, false)
@@ -305,14 +317,13 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             return
         }
 
-        // 主线程一次性读取开关状态与 UI 状态，后续 shell 操作全部放后台
+        // 主线程一次性读取开关状态，后续 shell 操作全部放后台
         val state = SwitchState(
             appHide = binding.switchAppHide.isChecked,
             kernelSpoof = binding.switchKernelSpoof.isChecked,
             susfsLog = binding.switchSusfsLog.isChecked,
             hideMnt = binding.switchHideMntNonroot.isChecked,
         )
-        val uiSafeMode = binding.jbWarningCard.visibility == View.VISIBLE
         val appContext = requireContext().applicationContext
 
         binding.loadEnableBtn.isEnabled = false
@@ -321,13 +332,18 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         thread {
             val hasRoot = DeviceInfo.hasRoot()
             val env = if (hasRoot) DeviceInfo.detectRoot(appContext, force = false) else null
-            // 越狱模式 / permissive：只写 /data/adb/ 配置，不做任何内核下发。
-            // 探测不可用时保守按安全模式处理，宁可不下发也不能冒险动内核。
-            val safeMode = uiSafeMode ||
-                env?.let { it.jailbreak || it.permissive } == true ||
-                env == null
+            val out = if (hasRoot) {
+                DeviceInfo.execRootCapture(buildScript(state, paths), 20L)
+            } else null
 
-            val ok = if (hasRoot) DeviceInfo.execRoot(buildScript(state, paths, safeMode)) else false
+            // 解析真实下发结果：APPLIED 为内核实际接受的路径条数
+            val applied = out?.lineSequence()
+                ?.firstOrNull { it.startsWith("SUS_APPLIED=") }
+                ?.substringAfter("=")?.trim()?.toIntOrNull() ?: 0
+            val haveBin = out?.lineSequence()
+                ?.firstOrNull { it.startsWith("SUS_HAVE_BIN=") }
+                ?.substringAfter("=")?.trim() == "1"
+            val total = paths.size
 
             if (isAdded) {
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -335,10 +351,14 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     binding.applyBtn.isEnabled = true
                     when {
                         !hasRoot -> snack(R.string.susfs_apply_noroot)
-                        !ok -> snack(R.string.susfs_apply_failed)
-                        safeMode -> snack(getString(R.string.susfs_loaded_safe, paths.size))
-                        else -> snack(getString(R.string.susfs_loaded, paths.size))
+                        out == null -> snack(R.string.susfs_apply_failed)
+                        !haveBin -> snack(getString(R.string.susfs_apply_no_tool, total))
+                        applied == 0 -> snack(getString(R.string.susfs_apply_no_kernel, total))
+                        applied < total -> snack(getString(R.string.susfs_apply_partial, applied, total))
+                        else -> snack(getString(R.string.susfs_loaded, applied))
                     }
+                    // 应用后刷新状态，SUSFS 支持/版本会同步更新
+                    loadDetection(refresh = true)
                 }
             }
         }
@@ -346,17 +366,21 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
     /**
      * 分区写入守卫：
-     * - 所有「写入目标」严格限定为 /data/adb/ 下的 config.sh 与 sus_path.txt；
-     * - 用户提供的路径只作为文件内容 / 内核 ioctl 参数，绝不会拼接成写入目标路径；
+     * - 所有「写入目标」严格限定为 /data/adb/ 下的 config.sh 与 sus_path.txt（数据区）；
+     * - 用户提供的路径只作为文件内容 / ksu_susfs 参数，绝不拼接成写入目标；
      * - 不含任何 dd / flash / 块设备操作，不触碰 boot、system、vendor、vbmeta 等分区；
-     * - safeMode（越狱模式 / permissive）下连 ksu_susfs 内核下发都跳过，只保存配置。
-     *   越狱模式是运行时动态加载 LKM 的临时 root，改动分区会破坏验证启动链导致格机。
+     *
+     * 关键修复：路径隐藏要「即时生效」必须通过 ksu_susfs add_sus_path 走 supercall
+     * 把规则写进内核内存表（builtin 补丁内核没有 /proc/modules 模块名，也不靠 /data/adb
+     * 配置文件即时生效）。add_sus_path 是纯内存态 ioctl/supercall，不写任何分区，
+     * 不会破坏 AVB / dm-verity，因此越狱模式（临时 LKM root）下同样允许执行——
+     * 越狱模式严禁的是「刷内核 / 写分区」，与本操作无关。
      */
-    private fun buildScript(state: SwitchState, paths: List<String>, safeMode: Boolean): String {
+    private fun buildScript(state: SwitchState, paths: List<String>): String {
         val lines = mutableListOf<String>()
         val sanitized = paths.filter { isSafePath(it) }
 
-        // susfs4ksu 在不同实现/模块版本下可能落在多个位置，全部覆盖写入（均为 /data/adb/ 数据区）
+        // susfs4ksu 配置文件持久化（重启后由模块 boot 脚本读取），均为 /data/adb/ 数据区
         val dirs = listOf(
             SUSFS_DIR,
             "/data/adb/modules/susfs4ksu",
@@ -386,18 +410,22 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             lines += "chmod 644 $dir/config.sh $dir/sus_path.txt 2>/dev/null || true"
         }
 
-        // 内核 ioctl 即时下发（不写分区）。越狱模式 / permissive 下跳过，
-        // 避免临时 root 环境里产生任何内核态副作用；配置留待已刷好补丁内核时生效。
-        if (!safeMode && sanitized.isNotEmpty()) {
-            lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
-            lines += "  if [ -x \$b ]; then"
-            for (path in sanitized) {
-                lines += "    \$b add_sus_path '$path' 2>/dev/null || true"
-            }
-            lines += "    break"
-            lines += "  fi"
-            lines += "done"
+        // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数
+        lines += "BIN=''"
+        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/susfs4ksu/ksu_susfs; do"
+        lines += "  [ -x \"\$b\" ] && BIN=\"\$b\" && break"
+        lines += "done"
+        lines += "[ -z \"\$BIN\" ] && BIN=\$(command -v ksu_susfs 2>/dev/null)"
+        lines += "APPLIED=0"
+        lines += "if [ -n \"\$BIN\" ]; then"
+        for (path in sanitized) {
+            lines += "  \"\$BIN\" add_sus_path '$path' >/dev/null 2>&1 && APPLIED=\$((APPLIED+1))"
         }
+        lines += "  echo SUS_HAVE_BIN=1"
+        lines += "else"
+        lines += "  echo SUS_HAVE_BIN=0"
+        lines += "fi"
+        lines += "echo SUS_APPLIED=\$APPLIED"
 
         lines += "true"
         return lines.joinToString("\n")

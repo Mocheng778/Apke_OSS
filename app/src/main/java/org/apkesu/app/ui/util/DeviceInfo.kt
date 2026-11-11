@@ -111,7 +111,21 @@ object DeviceInfo {
 
     // ---------------------------------------------------------------- Root 环境探测
 
-    data class ModeTag(val label: String, val accent: Boolean = false)
+    /** 互斥的单一真实工作模式：LKM / GKI / LKM 越狱。 */
+    enum class WorkMode(val label: String, val accent: Boolean = false) {
+        LKM("LKM 工作模式"),
+        GKI("GKI 工作模式"),
+        JAILBREAK_LKM("LKM 越狱工作模式", accent = true),
+        UNKNOWN("工作模式未知"),
+    }
+
+    /** SUSFS 部署状态，决定能否即时下发路径。 */
+    enum class SusfsState(val label: String) {
+        KERNEL_OK("已启用（内核已打补丁）"),
+        TOOL_ONLY("未生效：内核未带 SUSFS 补丁"),
+        KERNEL_NOTOOL("内核已支持，缺少 ksu_susfs 工具"),
+        NONE("未检测到（内核与用户态模块均未部署）"),
+    }
 
     data class RootEnv(
         val working: Boolean,
@@ -125,9 +139,14 @@ object DeviceInfo {
         val fingerprint: String,
         val superuser: String,
         val modules: String,
-        val modes: List<ModeTag>,
+        /** 互斥单一工作模式，不再并列显示多个标签。 */
+        val workMode: WorkMode,
         val susfs: Boolean,
         val susfsVersion: String,
+        val susfsState: SusfsState,
+        val susfsBin: String,
+        val susfsFeatures: String,
+        val susfsVariant: String,
         /** 越狱模式 / permissive：此时严禁写入或刷写任何分区，否则会破坏验证启动链导致格机。 */
         val jailbreak: Boolean = false,
         val permissive: Boolean = false,
@@ -175,11 +194,18 @@ object DeviceInfo {
             map["SELINUX"]?.equals("Permissive", ignoreCase = true) == true ||
             selinuxMode().equals("Permissive", ignoreCase = true)
 
-        val modes = buildList {
-            if (map["LKM"] == "1") add(ModeTag("LKM"))
-            if (map["GKI"] == "1") add(ModeTag("GKI"))
-            if (map["CUSTOM"] == "1") add(ModeTag("自定义"))
-            if (map["JAILBREAK"] == "1") add(ModeTag("越狱模式", accent = true))
+        // 互斥的单一工作模式：脚本按 越狱 > LKM > GKI 优先级只输出一个 MODE
+        val workMode = when (map["MODE"]) {
+            "JAILBREAK_LKM" -> WorkMode.JAILBREAK_LKM
+            "LKM" -> WorkMode.LKM
+            "GKI" -> WorkMode.GKI
+            else -> WorkMode.UNKNOWN
+        }
+        val susfsState = when (map["SUSFSSTATE"]) {
+            "KERNEL_OK" -> SusfsState.KERNEL_OK
+            "TOOL_ONLY" -> SusfsState.TOOL_ONLY
+            "KERNEL_NOTOOL" -> SusfsState.KERNEL_NOTOOL
+            else -> SusfsState.NONE
         }
 
         val env = RootEnv(
@@ -194,9 +220,13 @@ object DeviceInfo {
             fingerprint = v("FP"),
             superuser = v("SUPERUSER", "—"),
             modules = v("MODULES", "—"),
-            modes = modes,
+            workMode = workMode,
             susfs = map["SUSFS"] == "1",
             susfsVersion = v("SUSFSVER", ""),
+            susfsState = susfsState,
+            susfsBin = v("SUSBIN", ""),
+            susfsFeatures = v("SUSFSFEAT", ""),
+            susfsVariant = v("SUSFSVAR", ""),
             jailbreak = jailbreak,
             permissive = permissive,
         )

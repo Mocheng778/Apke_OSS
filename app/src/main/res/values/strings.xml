@@ -333,12 +333,12 @@
     <string name="susfs_version_label">版本：%1$s</string>
     <string name="susfs_root_framework">Root框架</string>
     <string name="susfs_load_enable">加载并启用</string>
-    <string name="susfs_load_enable_summary">重新读取 Root 环境并写入路径隐藏配置（不触碰任何分区）</string>
+    <string name="susfs_load_enable_summary">写入配置并通过 ksu_susfs 即时下发到内核（不触碰任何分区）</string>
 
     <!-- 越狱模式：分区写入高危警示 -->
     <string name="susfs_jb_warning_title">⚠ 越狱模式：严禁改动分区</string>
     <string name="susfs_jb_warning">当前为越狱模式 / permissive SELinux（运行时动态加载 LKM 取得的临时 Root，未刷入内核）。此状态下写入或刷写任何分区（boot、init_boot、vendor_boot、system、vendor、vbmeta、dtbo、super 等）都会破坏验证启动链，导致无法开机或格机清除数据。请勿在此模式下刷入 SUSFS 补丁内核、AK3 内核包或任何会改写分区的模块。本页只写入 /data/adb/ 数据区配置，不触碰分区，可安全使用；内核级路径隐藏需设备本身已运行带 SUSFS 补丁的内核后才会生效。</string>
-    <string name="susfs_safe_banner">安全模式：配置仅写入 /data/adb/ 数据区，全程不改写任何分区，不会触发格机</string>
+    <string name="susfs_safe_banner">分区安全：配置仅写入 /data/adb/ 数据区，路径通过内核 supercall 即时下发（纯内存态），全程不改写任何分区，不会触发格机</string>
 
     <string name="susfs_env_section">Root 环境</string>
     <string name="susfs_stat_superuser">超级用户</string>
@@ -354,7 +354,10 @@
     <string name="susfs_info_susfs">SUSFS 支持</string>
     <string name="susfs_info_susfs_yes">已启用</string>
     <string name="susfs_info_susfs_no">未检测到</string>
-    <string name="susfs_mode_disclaimer">工作模式（LKM / GKI / 自定义 / 越狱模式）与钩子类型由内核特征推断，精确状态以对应 Root 管理器显示为准。越狱模式为临时提权，重启后可能失效，且严禁改动任何分区。</string>
+    <string name="susfs_info_susfs_bin">ksu_susfs 工具</string>
+    <string name="susfs_info_susfs_variant">SUSFS 形态</string>
+    <string name="susfs_info_susfs_features">已启用特性</string>
+    <string name="susfs_mode_disclaimer">工作模式按 /proc/modules、/sys/module、内核版本与越狱特征互斥判定，只显示一种：LKM 工作模式 / GKI 工作模式 / LKM 越狱工作模式。越狱模式为临时提权，重启后可能失效，且严禁改动任何分区。</string>
 
     <string name="susfs_switches_section">隐藏开关</string>
     <string name="susfs_app_hide">应用隐藏</string>
@@ -380,10 +383,12 @@
 
     <string name="susfs_apply">写入配置并启用</string>
     <string name="susfs_apply_success">配置已写入 /data/adb/，重启后生效</string>
-    <string name="susfs_apply_failed">写入失败，请确认已授予 Root 权限</string>
+    <string name="susfs_apply_failed">执行失败，请确认已授予 Root 权限</string>
     <string name="susfs_apply_noroot">未检测到 Root，无法写入</string>
     <string name="susfs_select_first">请先选择或添加需要隐藏的路径</string>
-    <string name="susfs_loaded">已写入配置并下发，%1$d 条路径已生效</string>
-    <string name="susfs_loaded_safe">越狱模式：已安全写入配置，%1$d 条路径已保存（未执行内核下发，不动分区）</string>
-    <string name="susfs_hint">配置仅写入 /data/adb/susfs4ksu/（config.sh / sus_path.txt），并在非越狱模式下调用内核接口即时下发，全程不改写 boot、system、vendor、vbmeta 等任何分区，不会触发格机。已适配 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk 及 LKM、GKI、自定义内核与越狱模式。越狱模式为临时提权，本功能此时只保存配置、不做任何内核下发；内核级路径隐藏需设备本身已运行带 SUSFS 补丁的内核，切勿在越狱模式下刷写内核或分区。</string>
+    <string name="susfs_loaded">已即时下发，%1$d 条路径已在内核生效（重启后由 susfs4ksu 模块自动恢复）</string>
+    <string name="susfs_apply_no_tool">已保存 %1$d 条配置到 /data/adb/，但缺少 ksu_susfs 工具：请安装 susfs4ksu 模块后重试</string>
+    <string name="susfs_apply_no_kernel">已保存 %1$d 条配置到 /data/adb/，但 0 条生效：当前内核未带 SUSFS 补丁，需刷入带 SUSFS 补丁的内核（越狱模式严禁刷写）</string>
+    <string name="susfs_apply_partial">已下发 %1$d / %2$d 条路径，部分未生效（内核可能未编译对应特性）</string>
+    <string name="susfs_hint">路径隐藏要生效需两半：① 内核带 SUSFS 补丁（builtin 或 susfs_guard_lkm 模块）；② 安装 susfs4ksu 用户态模块提供 ksu_susfs 工具。点击「加载并启用」会写入 /data/adb/susfs4ksu/（config.sh / sus_path.txt）持久化，并调用 ksu_susfs add_sus_path 即时下发生效；手动下发的内核规则重启会失效，靠上述配置文件在开机时恢复。全程只写数据区 + 内核内存态 supercall，不改写 boot、system、vendor、vbmeta 等任何分区，不会触发格机。若上方显示「内核未带 SUSFS 补丁」，则本功能在该设备上无法生效——Magisk 与未打补丁的内核不支持 SUSFS。</string>
 </resources>
