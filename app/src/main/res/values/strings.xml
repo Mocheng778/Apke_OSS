@@ -330,6 +330,11 @@
     <string name="susfs_support_checking">检测中…</string>
     <string name="susfs_status_working">工作中</string>
     <string name="susfs_status_inactive">未激活</string>
+    <string name="susfs_status_probe_failed">检测失败</string>
+    <string name="susfs_probe_version_hint">请下拉刷新或重新授权 Root</string>
+    <string name="susfs_probe_failed_title">⚠ Root 环境探测未完成</string>
+    <string name="susfs_probe_failed">已检测到 Root，但探测脚本未能返回结果，工作模式与 SUSFS 状态无法判定。请确认已在 KernelSU / SukiSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」，且未勾选「隐藏 SU / 限制命令」类选项，然后点「加载并启用」重试。诊断：%1$s</string>
+    <string name="susfs_info_probe_diag">探测诊断</string>
     <string name="susfs_version_label">版本：%1$s</string>
     <string name="susfs_root_framework">Root框架</string>
     <string name="susfs_load_enable">加载并启用</string>
@@ -413,7 +418,8 @@
 
     <string name="susfs_apply">写入配置并启用</string>
     <string name="susfs_apply_success">配置已写入 /data/adb/，重启后生效</string>
-    <string name="susfs_apply_failed">执行失败，请确认已授予 Root 权限</string>
+    <string name="susfs_apply_failed">执行失败，请重试或查看探测诊断</string>
+    <string name="susfs_apply_exec_failed">下发失败：%1$s</string>
     <string name="susfs_apply_noroot">未检测到 Root，无法写入</string>
     <string name="susfs_select_first">请先选择或添加需要隐藏的路径</string>
     <string name="susfs_loaded">已即时下发，%1$d 条路径已在内核生效（重启后由 susfs4ksu 模块自动恢复）</string>
