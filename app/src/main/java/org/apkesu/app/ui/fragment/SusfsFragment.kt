@@ -187,9 +187,11 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
     private fun renderStatus(env: DeviceInfo.RootEnv) {
         lastEnv = env
-        // 探测脚本没跑通时，环境信息全部不可信：宁可如实显示「检测失败 + 诊断」，
-        // 也不要像旧版那样伪装成「工作中 / 已 Root」却把工作模式、超级用户、模块全填 —。
-        if (!env.probeOk) {
+        // 完全没拿到任何基准字段：环境信息不可信，如实显示「检测失败 + 诊断」，
+        // 绝不伪装成「工作中 / 已 Root」却把工作模式、超级用户、模块全填 —。
+        // 若只是被截断但已采到基础字段（probePartial），则保留已采集信息继续正常渲染，
+        // 仅在末尾追加「检测不完整」提示。
+        if (!env.probeOk && !env.probePartial) {
             binding.susfsStatus.setText(R.string.susfs_status_probe_failed)
             binding.susfsVersion.setText(R.string.susfs_probe_version_hint)
             binding.jbWarningTitle.setText(R.string.susfs_probe_failed_title)
@@ -247,6 +249,14 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         renderModeChip(env.workMode)
         renderKoStatus(env)
         renderEnvInfo(env)
+
+        // 探测被截断但已采到基础字段：保留上面已渲染的工作模式 / 模块数 / ko 状态，
+        // 仅在提示卡追加「检测不完整」说明（越狱 / permissive 提示优先级更高，不被覆盖）。
+        if (env.probePartial && !jailbreak && !env.permissive) {
+            binding.jbWarningTitle.setText(R.string.susfs_probe_partial_title)
+            binding.jbWarningText.text = getString(R.string.susfs_probe_partial, env.probeError)
+            binding.jbWarningCard.visibility = View.VISIBLE
+        }
     }
 
     /** 只显示一个互斥的真实工作模式标签（LKM / GKI / LKM 越狱），不再并列堆叠。 */
@@ -287,8 +297,8 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         }
 
         val rows = buildList {
-            // 探测失败时把真实诊断放在最前面，避免用户只看到一堆「未知 / —」而不知原因
-            if (!env.probeOk && env.probeError.isNotEmpty()) {
+            // 探测失败 / 不完整时把真实诊断放在最前面，避免用户只看到一堆「未知 / —」而不知原因
+            if (env.probeError.isNotEmpty()) {
                 add(R.string.susfs_info_probe_diag to env.probeError)
             }
             add(R.string.susfs_info_framework to env.framework)
