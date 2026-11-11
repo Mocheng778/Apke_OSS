@@ -171,16 +171,56 @@ echo "SUSMISMATCH=$SUSMISMATCH"
 echo "SUSMSG=$SUSMSG"
 
 # ---------------------------------------------------------------- SUSFS 独立内核模块 (.ko) 探测
-# SUSFS 除了编译进内核（GKI / builtin），也可作为独立 LKM（susfs_guard_lkm.ko 等）
-# 动态 insmod 注入内核——这正是「不刷内核 / 不改分区」让 arm64 LKM 设备获得 SUSFS 的方式。
-# 优先取 susfs4ksu 模块自带 .ko，再用 find 全盘兜底并过滤 susfs/sui 相关文件名。
+# 修订 15：发行版已内置 susfs4ksu-lkm 全套 KMI 的 .ko（模块 ZIP 的 susfs_ko/ 目录，
+# 刷入后位于 /data/adb/modules/apkesu_zygisk/susfs_ko/）。这里优先探测内置目录并按
+# 当前内核 KMI 自动挑一份，彻底摆脱「用户需另装 susfs4ksu 才有 .ko」的空壳问题。
 KO=""
-for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
+KODIR=""
+KOKMI=""
+KOMATCH=""
+KOLIST=""
+KOCOUNT=0
+for D in \
+  /data/adb/modules/apkesu_zygisk/susfs_ko \
+  /data/adb/modules_update/apkesu_zygisk/susfs_ko \
+  /data/adb/ksu/susfs_ko \
+  /data/adb/susfs_ko; do
+  [ -d "$D" ] && KODIR="$D" && break
+done
+[ -z "$KODIR" ] && KODIR=$(find /data/adb -maxdepth 5 -type d -name susfs_ko 2>/dev/null | head -n1)
+
+# 依据 /proc/sys/kernel/osrelease 推导 KMI（androidNN-X.Y），与内置 .ko 文件名后缀匹配。
+KREL=$(cat /proc/sys/kernel/osrelease 2>/dev/null)
+[ -z "$KREL" ] && KREL=$(uname -r 2>/dev/null)
+KAND=$(echo "$KREL" | grep -oE 'android[0-9]+' | head -n1)
+# GKI osrelease 形如 6.1.75-android14-11-g...：版本在开头，androidNN 为 KMI 分支。
+KVER=$(echo "$KREL" | grep -oE '^[0-9]+\.[0-9]+' | head -n1)
+if [ -n "$KAND" ] && [ -n "$KVER" ]; then
+  KOKMI="${KAND}-${KVER}"
+fi
+
+if [ -n "$KODIR" ]; then
+  KOCOUNT=$(ls -1 "$KODIR"/*.ko 2>/dev/null | wc -l | tr -d ' ')
+  KOLIST=$(ls -1 "$KODIR"/*.ko 2>/dev/null | xargs -n1 basename 2>/dev/null | paste -sd ',' -)
+  if [ -n "$KOKMI" ] && [ -f "$KODIR/susfs_guard_lkm-${KOKMI}.ko" ]; then
+    KOMATCH="$KODIR/susfs_guard_lkm-${KOKMI}.ko"
+    KO="$KOMATCH"
+  else
+    KO=$(ls -1 "$KODIR"/*.ko 2>/dev/null | head -n1)
+  fi
+fi
+# 内置缺失时，回退到用户自行安装的 susfs4ksu 模块 / 全盘兜底。
+[ -z "$KO" ] && for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
   KO=$(find "$D" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)
   [ -n "$KO" ] && break
 done
 [ -z "$KO" ] && KO=$(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)
 echo "KO=$KO"
+echo "KODIR=$KODIR"
+echo "KOKMI=$KOKMI"
+echo "KOMATCH=$KOMATCH"
+echo "KOLIST=$KOLIST"
+echo "KOCOUNT=$KOCOUNT"
 
 # ---------------------------------------------------------------- 工作模式（互斥、单一真实状态）
 # LKM：KernelSU 以「可加载内核模块」注入原厂内核，不替换内核，不刷 boot/init_boot。
