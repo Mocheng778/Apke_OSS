@@ -114,74 +114,98 @@ object DeviceInfo {
 
     /**
      * 加载 SUSFS 独立内核模块（LKM）：动态 insmod 注入内核，不刷分区、不触碰 boot/system/vendor/vbmeta，
-     * 「现有 GKI SUSFS 配置与 KernelSU KO 保持不变」。前提：设备上需存在与当前内核版本匹配的
-     * .ko（通常为 susfs4ksu 模块自带，或用户自备）。不匹配的 ko 会被内核拒绝（vermagic/KMI 不符），
-     * 不会强行加载。该能力仅在解锁模式（非越狱）下由 UI 触发。
+     * 「现有 GKI SUSFS 配置与 KernelSU KO 保持不变」。
+     *
+     * 修订 15：发行版已内置 susfs4ksu-lkm 全套 KMI 的 .ko（模块 ZIP 的 susfs_ko/，刷入后位于
+     * /data/adb/modules/apkesu_zygisk/susfs_ko/）。这里优先按当前内核 KMI（androidNN-X.Y）精确
+     * 挑选内置 .ko 加载，不再要求用户另装 susfs4ksu 模块。加载顺序：ksud insmod（KSU 系，处理
+     * 签名/vermagic）→ 系统 insmod（带 expose_proc=1 建立 /proc/susfs_* 节点）→ 内置 susfs_insmod
+     * 加载器。vermagic/KMI 不符时内核会拒绝，不会强行加载。仅解锁模式（非越狱）下由 UI 触发。
+     *
+     * @param preferredKo 用户在 UI 手动指定的 .ko 文件名（仅允许 [A-Za-z0-9._-]），空=自动按 KMI 选。
      */
     data class ModuleLoadResult(
         val state: String, // loaded / already / no_ko / failed / no_tool
         val path: String,
         val error: String,
-        /** 实际采用的加载方式：ksud（KernelSU Next 原生）/ insmod（手动 LKM 加载）。 */
+        /** 实际采用的加载方式：ksud-insmod / insmod / susfs_insmod / bundled。 */
         val method: String = "",
+        /** 当前内核推导出的 KMI。 */
+        val kmi: String = "",
+        /** 无精确匹配时，内置目录里可选的 .ko 文件名（逗号分隔）。 */
+        val available: String = "",
     )
 
-    fun loadSusfsModule(): ModuleLoadResult {
-        // 多管理器原生调用：KernelSU Next 优先用其原生 ksud susfs load（按 KMI 加载预编译模块，
-        // 并启用 autoload 开机自启）；其余管理器（SukiSU / KernelSU 官方 / SterSU）无 ksud，
-        // 回退到手动 insmod 独立 LKM（susfs_guard_lkm.ko 等）。两者都不刷分区、不触碰 GKI 配置。
+    fun loadSusfsModule(preferredKo: String = ""): ModuleLoadResult {
+        // 防 shell 注入：手动指定的文件名只保留安全字符，且不含路径分隔符。
+        val safe = preferredKo.takeIf {
+            it.isNotEmpty() && !it.contains('/') && it.matches(Regex("^[A-Za-z0-9._-]+$"))
+        } ?: ""
         val script = """
+            KODIR=""
+            for D in /data/adb/modules/apkesu_zygisk/susfs_ko /data/adb/modules_update/apkesu_zygisk/susfs_ko /data/adb/ksu/susfs_ko /data/adb/susfs_ko; do
+              [ -d "${'$'}D" ] && KODIR="${'$'}D" && break
+            done
+            [ -z "${'$'}KODIR" ] && KODIR=${'$'}(find /data/adb -maxdepth 5 -type d -name susfs_ko 2>/dev/null | head -n1)
+
+            KREL=${'$'}(cat /proc/sys/kernel/osrelease 2>/dev/null)
+            [ -z "${'$'}KREL" ] && KREL=${'$'}(uname -r 2>/dev/null)
+            KAND=${'$'}(echo "${'$'}KREL" | grep -oE 'android[0-9]+' | head -n1)
+            KVER=${'$'}(echo "${'$'}KREL" | grep -oE '^[0-9]+\.[0-9]+' | head -n1)
+            KMI=""
+            [ -n "${'$'}KAND" ] && [ -n "${'$'}KVER" ] && KMI="${'$'}{KAND}-${'$'}{KVER}"
+            echo MOD_KMI="${'$'}KMI"
+            echo MOD_KODIR="${'$'}KODIR"
+
+            PREFERRED="$safe"
+            KO=""
+            if [ -n "${'$'}PREFERRED" ] && [ -n "${'$'}KODIR" ] && [ -f "${'$'}KODIR/${'$'}PREFERRED" ]; then
+              KO="${'$'}KODIR/${'$'}PREFERRED"
+            elif [ -n "${'$'}KMI" ] && [ -n "${'$'}KODIR" ] && [ -f "${'$'}KODIR/susfs_guard_lkm-${'$'}{KMI}.ko" ]; then
+              KO="${'$'}KODIR/susfs_guard_lkm-${'$'}{KMI}.ko"
+            fi
+            if [ -z "${'$'}KO" ]; then
+              echo MOD_STATE=no_ko
+              echo MOD_AVAIL=${'$'}(ls -1 "${'$'}KODIR"/*.ko 2>/dev/null | xargs -n1 basename 2>/dev/null | paste -sd ',' -)
+              exit 0
+            fi
+            echo MOD_PATH="${'$'}KO"
+
+            if grep -q 'susfs_guard_lkm' /proc/modules 2>/dev/null; then
+              echo MOD_METHOD=already
+              echo MOD_STATE=already
+              exit 0
+            fi
+
             KSUD=""
             for K in /data/adb/ksud /data/adb/ksu/bin/ksud /data/adb/ap/bin/apd; do
               [ -x "${'$'}K" ] && KSUD="${'$'}K" && break
             done
             [ -z "${'$'}KSUD" ] && KSUD=${'$'}(command -v ksud 2>/dev/null)
 
-            if [ -n "${'$'}KSUD" ]; then
-              OUT=${'$'}({ "${'$'}KSUD" susfs load; } 2>&1)
-              RC=${'$'}?
-              if [ ${'$'}RC -eq 0 ]; then
-                "${'$'}KSUD" susfs autoload enable >/dev/null 2>&1
-                echo MOD_METHOD=ksud
-                echo MOD_STATE=loaded
-                echo MOD_PATH=${'$'}(echo "${'$'}OUT" | head -n1)
-                echo MOD_ERR=${'$'}OUT
-                exit 0
-              else
-                echo MOD_METHOD=ksud
-                echo MOD_STATE=failed
-                echo MOD_ERR=${'$'}OUT
-                exit 0
-              fi
+            ERR=${'$'}(mktemp)
+            METHOD=""
+            OK=0
+            if [ -n "${'$'}KSUD" ] && "${'$'}KSUD" insmod "${'$'}KO" 2>"${'$'}ERR"; then
+              OK=1; METHOD=ksud-insmod
+            elif insmod "${'$'}KO" expose_proc=1 2>>"${'$'}ERR"; then
+              OK=1; METHOD=insmod
+            elif [ -f "${'$'}KODIR/susfs_insmod" ] && chmod 755 "${'$'}KODIR/susfs_insmod" 2>/dev/null && "${'$'}KODIR/susfs_insmod" "${'$'}KO" 2>>"${'$'}ERR"; then
+              OK=1; METHOD=susfs_insmod
             fi
-            echo MOD_METHOD=insmod
-
-            KO=${'$'}$(true)
-            for D in /data/adb/modules/susfs4ksu /data/adb/ksu/susfs4ksu /data/adb/susfs4ksu; do
-              KO=${'$'}(find "${'$'}D" -maxdepth 1 -name '*.ko' 2>/dev/null | head -n1)
-              [ -n "${'$'}KO" ] && break
-            done
-            [ -z "${'$'}KO" ] && KO=${'$'}(find /data/adb -maxdepth 6 -name '*.ko' 2>/dev/null | grep -iE 'susfs|sui' | head -n1)
-            if [ -z "${'$'}KO" ]; then echo MOD_STATE=no_ko; exit 0; fi
-            KN=${'$'}(basename "${'$'}KO" .ko)
-            echo MOD_PATH="${'$'}KO"
-            if grep -q "${'$'}KN" /proc/modules 2>/dev/null; then
-              echo MOD_STATE=already
+            echo MOD_METHOD="${'$'}METHOD"
+            if [ "${'$'}OK" -eq 1 ] || grep -q 'susfs_guard_lkm' /proc/modules 2>/dev/null; then
+              echo MOD_STATE=loaded
             else
-              ERR=${'$'}(mktemp)
-              if insmod "${'$'}KO" 2="${'$'}ERR"; then
-                echo MOD_STATE=loaded
-              else
-                echo MOD_STATE=failed
-                echo MOD_ERR="${'$'}(head -c 300 "${'$'}ERR" | tr '\n' ' ')"
-              fi
-              rm -f "${'$'}ERR"
+              echo MOD_STATE=failed
+              echo MOD_ERR="${'$'}(head -c 300 "${'$'}ERR" | tr '\n' ' ')"
             fi
+            rm -f "${'$'}ERR"
         """.trimIndent()
-        val res = execRootDetail(script, 25)
+        val res = execRootDetail(script, 30)
         if (!res.finished) {
             val detail = res.err.takeIf { it.isNotBlank() }?.trim()
-                ?: "su 在 25 秒内无响应（通常是 Root 管理器未授予本应用权限，su 卡住未返回）"
+                ?: "su 在 30 秒内无响应（通常是 Root 管理器未授予本应用权限，su 卡住未返回）"
             return ModuleLoadResult("failed", "", "执行失败：$detail。请确认已在 KernelSU / SukiSU / Magisk 的超级用户列表中允许「隐藏应用列表-OSS」", "")
         }
         val out = res.out
@@ -200,6 +224,8 @@ object DeviceInfo {
             path = map["MOD_PATH"].orEmpty(),
             error = map["MOD_ERR"].orEmpty(),
             method = map["MOD_METHOD"].orEmpty(),
+            kmi = map["MOD_KMI"].orEmpty(),
+            available = map["MOD_AVAIL"].orEmpty(),
         )
     }
 
@@ -260,6 +286,16 @@ object DeviceInfo {
         val susfsMismatchMsg: String = "",
         /** SUSFS 独立内核模块 (.ko) 路径；非空即探测到可用的独立 LKM，可经 insmod 动态加载。 */
         val susfsKo: String,
+        /** 发行版内置 .ko 目录（模块 ZIP 的 susfs_ko/），空表示未内置 / 模块未刷入。 */
+        val susfsKoDir: String = "",
+        /** 当前内核推导出的 KMI（androidNN-X.Y），用于自动挑选匹配的内置 .ko。 */
+        val susfsKoKmi: String = "",
+        /** 与当前内核 KMI 精确匹配的内置 .ko 路径；空表示无精确匹配（需手动选或加载会被内核拒）。 */
+        val susfsKoMatch: String = "",
+        /** 内置 .ko 文件名列表（逗号分隔），供 UI 手动选择。 */
+        val susfsKoList: String = "",
+        /** 内置 .ko 数量。 */
+        val susfsKoCount: Int = 0,
         /** Root 管理器类型，决定 SUSFS 原生调用入口（ksud / 内置管理器 / susfs4ksu）。 */
         val managerType: ManagerType,
         /** KernelSU Next 的 ksud 二进制路径（空表示不可用）。 */
@@ -384,6 +420,11 @@ object DeviceInfo {
             susfsVersionMismatch = susfsMismatch,
             susfsMismatchMsg = v("SUSMSG", ""),
             susfsKo = v("KO", ""),
+            susfsKoDir = v("KODIR", ""),
+            susfsKoKmi = v("KOKMI", ""),
+            susfsKoMatch = v("KOMATCH", ""),
+            susfsKoList = v("KOLIST", ""),
+            susfsKoCount = v("KOCOUNT", "0").toIntOrNull() ?: 0,
             managerType = managerType,
             ksudPath = v("KSUD", ""),
             ksudSusfsSupport = v("KSUDSUP", ""),
