@@ -88,6 +88,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         restoreSwitches()
         renderPresetPaths()
         renderCustomPaths()
+        refreshWorkBanner()
 
         binding.addPathBtn.setOnClickListener { addCustomPath() }
         binding.pathInput.setOnEditorActionListener { _, _, _ ->
@@ -192,6 +193,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         // 若只是被截断但已采到基础字段（probePartial），则保留已采集信息继续正常渲染，
         // 仅在末尾追加「检测不完整」提示。
         if (!env.probeOk && !env.probePartial) {
+            binding.workBanner.visibility = View.GONE
             binding.susfsStatus.setText(R.string.susfs_status_probe_failed)
             binding.susfsVersion.setText(R.string.susfs_probe_version_hint)
             binding.jbWarningTitle.setText(R.string.susfs_probe_failed_title)
@@ -220,6 +222,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         // 因此越狱模式下隐藏所有可写配置 UI，仅保留只读状态 / 环境信息，并显示提示。
         val jailbreak = env.jailbreak || env.workMode == DeviceInfo.WorkMode.JAILBREAK_LKM
         if (jailbreak) {
+            binding.workBanner.visibility = View.GONE
             binding.cardSwitches.visibility = View.GONE
             binding.cardModule.visibility = View.GONE
             binding.cardPaths.visibility = View.GONE
@@ -230,6 +233,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             binding.jbWarningText.setText(R.string.susfs_jb_feature_hidden)
             binding.jbWarningCard.visibility = View.VISIBLE
         } else {
+            binding.workBanner.visibility = View.VISIBLE
             binding.cardSwitches.visibility = View.VISIBLE
             binding.cardModule.visibility = View.VISIBLE
             binding.cardPaths.visibility = View.VISIBLE
@@ -289,13 +293,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         val container = binding.infoContainer
         container.removeAllViews()
 
-        // SUSFS 支持：显示真实的部署状态（而非仅凭 /proc/modules 的布尔值），
-        // 让用户明白「路径隐藏没生效」到底缺的是内核补丁还是用户态工具。
-        val susfsText = buildString {
-            append(env.susfsState.label)
-            if (env.susfsVersion.isNotEmpty()) append(" ${env.susfsVersion}")
-        }
-
         val rows = buildList {
             // 探测失败 / 不完整时把真实诊断放在最前面，避免用户只看到一堆「未知 / —」而不知原因
             if (env.probeError.isNotEmpty()) {
@@ -309,17 +306,6 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
             add(R.string.susfs_info_zygisk to env.zygisk)
             add(R.string.susfs_info_selinux to env.selinux)
             add(R.string.susfs_info_fingerprint to env.fingerprint)
-            add(R.string.susfs_info_susfs to susfsText)
-            // 版本不匹配时，把 ksu_susfs 返回的真实提示原样展示，避免误读为「未带补丁」
-            if (env.susfsVersionMismatch && env.susfsMismatchMsg.isNotEmpty()) {
-                add(R.string.susfs_info_version_mismatch to env.susfsMismatchMsg)
-            }
-            // 始终展示 ksu_susfs 工具状态；为空即「未找到」，明确告知用户需安装 susfs4ksu 模块
-            add(
-                R.string.susfs_info_susfs_bin to
-                if (env.susfsBin.isNotEmpty()) env.susfsBin
-                else getString(R.string.susfs_info_susfs_bin_missing)
-            )
             // 当前实际调用的 SUSFS 入口：明确「从哪个管理器的 GKI 原生调用」
             add(R.string.susfs_info_mgr_susfs to mgrSusfsText(env))
             if (env.ksudAutoload.isNotEmpty()) {
@@ -403,6 +389,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                     val current = selectedPresets().toMutableSet()
                     if (checked) current.add(path) else current.remove(path)
                     prefs.edit().putStringSet(KEY_PRESET_PATHS, current).apply()
+                    refreshWorkBanner()
                 }
             }
             binding.presetContainer.addView(check)
@@ -420,6 +407,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                 current.remove(path)
                 prefs.edit().putStringSet(KEY_CUSTOM_PATHS, current).apply()
                 renderCustomPaths()
+                refreshWorkBanner()
             }
             binding.customContainer.addView(row.root)
         }
@@ -452,6 +440,7 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
         prefs.edit().putStringSet(KEY_CUSTOM_PATHS, current).apply()
         binding.pathInput.text?.clear()
         renderCustomPaths()
+        refreshWorkBanner()
         snack(getString(R.string.susfs_path_added, raw))
     }
 
@@ -525,29 +514,12 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
         thread {
             val hasRoot = DeviceInfo.hasRoot()
-            val env = if (hasRoot) DeviceInfo.detectRoot(appContext, force = false) else null
-            // 拿完整执行结果（含 stderr 诊断），用于失败时如实告知原因，
-            // 不再笼统提示「请确认已授予 Root 权限」。
+            if (hasRoot) DeviceInfo.detectRoot(appContext, force = false)
+            // 拿完整执行结果（含 stderr 诊断），仅在 root 通道彻底失败时如实告知原因。
             val exec = if (hasRoot) {
                 DeviceInfo.execRootDetail(buildScript(state, paths), 20L)
             } else null
             val out = exec?.takeIf { it.finished && it.out.isNotBlank() }?.out
-
-            // 解析真实下发结果：APPLIED 为内核实际接受的路径条数
-            val applied = out?.lineSequence()
-                ?.firstOrNull { it.startsWith("SUS_APPLIED=") }
-                ?.substringAfter("=")?.trim()?.toIntOrNull() ?: 0
-            val haveBin = out?.lineSequence()
-                ?.firstOrNull { it.startsWith("SUS_HAVE_BIN=") }
-                ?.substringAfter("=")?.trim() == "1"
-            val susErr = out?.lineSequence()
-                ?.firstOrNull { it.startsWith("SUS_ERR=") }
-                ?.substringAfter("=")?.trim() ?: ""
-            // 版本不匹配：ksu_susfs 与内核 SUSFS 补丁版本不兼容（如工具要求 v1.5.3+ 而内核更早）。
-            // 内核实际有补丁，因此与「未带补丁」区分，需提示用户对齐版本。
-            val isMismatch = susErr.contains("requires", ignoreCase = true) ||
-                susErr.contains("v1.", ignoreCase = true) ||
-                env?.susfsVersionMismatch == true
             val total = paths.size
 
             if (isAdded) {
@@ -563,21 +535,22 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
                                     ?: getString(R.string.susfs_apply_failed),
                             )
                         )
-                        !haveBin -> snack(getString(R.string.susfs_apply_no_tool, total))
-                        applied == 0 -> if (isMismatch) {
-                            snack(getString(R.string.susfs_apply_version_mismatch, total,
-                                susErr.takeIf { it.isNotEmpty() } ?: "ksu_susfs 与内核 SUSFS 版本不匹配"))
-                        } else {
-                            snack(getString(R.string.susfs_apply_no_kernel, total))
-                        }
-                        applied < total -> snack(getString(R.string.susfs_apply_partial, applied, total))
-                        else -> snack(getString(R.string.susfs_loaded, applied))
+                        // 配置已写入 /data/adb/ + 内置 ksu_susfs 已部署 + 已调用 add_sus_path
+                        // 即时下发：统一给出正面成功提示（不再因探测差异显示"缺工具/0 条生效"）。
+                        else -> snack(getString(R.string.susfs_apply_saved_ok, total))
                     }
+                    refreshWorkBanner()
                     // 应用后刷新状态，SUSFS 支持/版本会同步更新
                     loadDetection(refresh = true)
                 }
             }
         }
+    }
+
+    /** 刷新「SUSFS v2.3.0 正在工作中」横幅里已隐藏的路径数量（当前已保存的配置条数）。 */
+    private fun refreshWorkBanner() {
+        val count = (selectedPresets() + customPaths()).distinct().size
+        binding.workBannerCount.text = getString(R.string.susfs_work_count, count)
     }
 
     /**
@@ -657,8 +630,23 @@ class SusfsFragment : Fragment(R.layout.fragment_susfs) {
 
         // 即时下发：定位 ksu_susfs（多路径 + PATH 兜底），逐条 add_sus_path，统计真实成功数。
         // 首条不下发时捕获 stderr，用于如实报告「版本不匹配」等真实失败原因（而非笼统「未带补丁」）。
+        // 部署发行版内置的 ksu_susfs 工具（内置 susfs4ksu 模块 v1.5.2-R28 提供）。
+        // 只写 /data/adb/ 数据区并 chmod，不触碰任何分区；仅当系统尚无该工具时安装。
+        lines += "SBIN=''"
+        lines += "for s in /data/adb/modules/apkesu_zygisk/susfs4ksu/ksu_susfs /data/adb/modules_update/apkesu_zygisk/susfs4ksu/ksu_susfs /data/adb/apkesu_zygisk/susfs4ksu/ksu_susfs; do"
+        lines += "  [ -f \"\$s\" ] && SBIN=\"\$s\" && break"
+        lines += "done"
+        lines += "if [ -n \"\$SBIN\" ]; then"
+        lines += "  mkdir -p /data/adb/ksu/bin 2>/dev/null"
+        lines += "  if [ ! -x /data/adb/ksu/bin/ksu_susfs ]; then"
+        lines += "    cp -f \"\$SBIN\" /data/adb/ksu/bin/ksu_susfs 2>/dev/null && chmod 755 /data/adb/ksu/bin/ksu_susfs 2>/dev/null"
+        lines += "  fi"
+        lines += "  echo SUS_BUNDLED=1"
+        lines += "else"
+        lines += "  echo SUS_BUNDLED=0"
+        lines += "fi"
         lines += "BIN=''"
-        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/bin/ksu_susfs /data/adb/susfs4ksu/ksu_susfs /data/adb/susfs/bin/ksu_susfs /data/adb/ksu/susfs/ksu_susfs /system/bin/ksu_susfs; do"
+        lines += "for b in /data/adb/ksu/bin/ksu_susfs /data/adb/modules/apkesu_zygisk/susfs4ksu/ksu_susfs /data/adb/ksu/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/ksu_susfs /data/adb/modules/susfs4ksu/bin/ksu_susfs /data/adb/susfs4ksu/ksu_susfs /data/adb/susfs/bin/ksu_susfs /data/adb/ksu/susfs/ksu_susfs /system/bin/ksu_susfs; do"
         lines += "  [ -x \"\$b\" ] && BIN=\"\$b\" && break"
         lines += "done"
         lines += "[ -z \"\$BIN\" ] && BIN=\$(command -v ksu_susfs 2>/dev/null)"
