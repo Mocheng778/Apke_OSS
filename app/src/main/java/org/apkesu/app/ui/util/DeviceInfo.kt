@@ -2,8 +2,8 @@ package org.apkesu.app.ui.util
 
 import android.content.Context
 import android.os.Build
+import android.util.Base64
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * 轻量级设备 / Root 环境探测工具。
@@ -296,36 +296,52 @@ object DeviceInfo {
     // ---------------------------------------------------------------- shell 执行
 
     /**
-     * 以 root shell 执行脚本并捕获 stdout。脚本通过 stdin 喂给 su，避免引号转义问题，
-     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
+     * 以 root shell 执行脚本并捕获 stdout。
+     *
+     * 实现要点（修订 9 · 修复「执行失败，请确认已授予 Root 权限」误报）：
+     * - 统一使用 `su -c` 命令式调用，与 hasRoot() 完全一致；脚本经 base64 编码后通过
+     *   `echo <b64> | base64 -d | sh` 注入，彻底避免引号转义与交互式 shell 卡死。
+     * - 旧的 `ProcessBuilder("su")` + stdin 喂脚本方式在 KernelSU / Magisk 下会让 su
+     *   开一个不随 EOF 退出的交互式 shell，waitFor 超时后被强杀返回 null，从而误报
+     *   「执行失败」——其实 hasRoot()（同样走 su -c）是成功的。本实现规避该问题。
+     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，
      * 越狱模式（permissive + 运行时加载 LKM 的临时 root）下同样可用。
      */
     fun execRootCapture(script: String, timeoutSeconds: Long = 12): String? = try {
-        val process = ProcessBuilder("su").start()
-        process.outputStream.use { it.write((script.trimEnd() + "\n").toByteArray()) }
-        val captured = AtomicReference("")
-        val reader = Thread {
-            captured.set(try {
+        val b64 = Base64.encodeToString(
+            script.trimEnd().toByteArray(Charsets.UTF_8),
+            Base64.NO_WRAP
+        )
+        val cmd = "su -c \"echo $b64 | base64 -d | sh\""
+        val process = ProcessBuilder("sh", "-c", cmd)
+            .redirectErrorStream(true)
+            .start()
+        val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
+        val out = if (finished) {
+            try {
                 process.inputStream.bufferedReader().readText()
             } catch (_: Throwable) {
                 ""
-            })
+            }
+        } else {
+            process.destroyForcibly()
+            ""
         }
-        reader.start()
-        val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
-        if (!finished) process.destroyForcibly()
-        reader.join(1500)
-        captured.get().takeIf { finished }
+        out.takeIf { finished }
     } catch (_: Throwable) {
         null
     }
 
-    /** 以 root shell 执行脚本（不关心输出）。 */
+    /** 以 root shell 执行脚本（不关心输出）。同样走 `su -c` + base64，规避交互式 shell 卡死。 */
     fun execRoot(script: String, timeoutSeconds: Long = 15): Boolean = try {
-        val process = ProcessBuilder("su")
+        val b64 = Base64.encodeToString(
+            script.trimEnd().toByteArray(Charsets.UTF_8),
+            Base64.NO_WRAP
+        )
+        val cmd = "su -c \"echo $b64 | base64 -d | sh\""
+        val process = ProcessBuilder("sh", "-c", cmd)
             .redirectErrorStream(true)
             .start()
-        process.outputStream.use { it.write((script.trimEnd() + "\n").toByteArray()) }
         val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
         if (!finished) {
             process.destroyForcibly()
