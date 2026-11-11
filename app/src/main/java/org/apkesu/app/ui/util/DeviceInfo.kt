@@ -114,9 +114,9 @@ object DeviceInfo {
 
     /**
      * 加载 SUSFS 独立内核模块（LKM）：动态 insmod 注入内核，不刷分区、不触碰 boot/system/vendor/vbmeta，
-     * 因此越狱模式（临时 LKM root）下同样安全，且「现有 GKI SUSFS 配置与 KernelSU KO 保持不变」。
-     * 前提：设备上需存在与当前内核版本匹配的 .ko（通常为 susfs4ksu 模块自带，或用户自备）。
-     * 不匹配的 ko 会被内核拒绝（vermagic/KMI 不符），不会强行加载。
+     * 「现有 GKI SUSFS 配置与 KernelSU KO 保持不变」。前提：设备上需存在与当前内核版本匹配的
+     * .ko（通常为 susfs4ksu 模块自带，或用户自备）。不匹配的 ko 会被内核拒绝（vermagic/KMI 不符），
+     * 不会强行加载。该能力仅在解锁模式（非越狱）下由 UI 触发。
      */
     data class ModuleLoadResult(
         val state: String, // loaded / already / no_ko / failed / no_tool
@@ -311,9 +311,9 @@ object DeviceInfo {
 
         // 越狱模式（运行时动态加载 LKM 的临时 root）与 permissive SELinux：
         // 这两种状态下改动任何分区都会破坏 AVB / dm-verity 验证启动链，导致无法开机或格机。
-        // 因此 App 在这两种状态下必须显示警示，并禁止一切刷写分区的操作。
-        // 注意：被禁止的只有「写分区」；ksu_susfs add_sus_path 是纯内存态 supercall，
-        // 不写分区、不破坏验证启动链，越狱模式下同样允许执行（见 SusfsFragment.buildScript）。
+        // 因此 App 在这两种状态下会显示警示。
+        // 注意：SUSFS 路径隐藏能力仅在解锁模式（正常 LKM / GKI，已刷入带 SUSFS 补丁内核）下可用；
+        // 越狱模式无法现场刷内核补救，故 UI 层直接隐藏该功能（见 SusfsFragment / FeatureFragment）。
         val jailbreak = map["JAILBREAK"] == "1"
         val permissive = map["PERMISSIVE"] == "1" ||
             map["SELINUX"]?.equals("Permissive", ignoreCase = true) == true ||
@@ -393,8 +393,7 @@ object DeviceInfo {
      * - 旧的 `ProcessBuilder("su")` + stdin 喂脚本方式在 KernelSU / Magisk 下会让 su
      *   开一个不随 EOF 退出的交互式 shell，waitFor 超时后被强杀返回 null，从而误报
      *   「执行失败」——其实 hasRoot()（同样走 su -c）是成功的。本实现规避该问题。
-     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，
-     * 越狱模式（permissive + 运行时加载 LKM 的临时 root）下同样可用。
+     * 同时兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
      */
     /**
      * 带诊断信息的 root 执行结果（修订 10）。
@@ -418,7 +417,7 @@ object DeviceInfo {
      *    shell 那样卡住导致 waitFor 超时；
      * 3. 不再依赖 base64（部分裁剪过的 root shell 没有 base64 会导致整条 pipeline 失败，
      *    表现为「执行失败」误报）。
-     * 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk，越狱模式同样可用。
+     * 兼容 KernelSU / KernelSU Next / SukiSU Ultra / SterSU / APatch / Magisk。
      */
     fun execRootDetail(script: String, timeoutSeconds: Long = 12): RootExecResult {
         val tmpDir = java.io.File("/data/local/tmp")
